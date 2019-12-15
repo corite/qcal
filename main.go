@@ -1,4 +1,3 @@
-// comment1
 package main
 
 import (
@@ -12,19 +11,24 @@ import (
 )
 
 const (
-	Username  = "psic4t"
-	Password  = "Ich hab Haus!"
-	Url       = "https://mail.data.haus/dav/psic4t/63c75aea-d9f3-40c0-4617-a5a624a3ba64/"
 	ConfigDir = ".config/qcal"
 	CacheDir  = ".cache/qcal"
 )
 
 var err string
+var homedir string = os.Getenv("HOME")
+var versionLocation string = (homedir + "/" + CacheDir + "/version.json")
+var configLocation string = (homedir + "/" + ConfigDir + "/config.json")
 
 type config struct {
 	Username string
 	Password string
 	Url      string
+}
+
+type version struct {
+	CTag         string
+	LastModified string
 }
 
 type props struct {
@@ -36,8 +40,6 @@ type props struct {
 }
 
 func getConf() *config {
-	homedir := os.Getenv("HOME")
-	configLocation := (homedir + "/" + ConfigDir + "/config.json")
 	configData, err := ioutil.ReadFile(configLocation)
 	if err != nil {
 		log.Fatal(err)
@@ -54,14 +56,15 @@ func getConf() *config {
 	return &conf
 }
 
-func getProp() {
-	req, errHttp := http.NewRequest("PROPFIND", Url, nil)
-	req.SetBasicAuth(Username, Password)
+func getProp() *props {
+	config := getConf()
+	req, err := http.NewRequest("PROPFIND", config.Url, nil)
+	req.SetBasicAuth(config.Username, config.Password)
 
 	cli := &http.Client{}
-	resp, errHttp := cli.Do(req)
-	if errHttp != nil {
-		log.Fatal(errHttp)
+	resp, err := cli.Do(req)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	xmlContent, _ := ioutil.ReadAll(resp.Body)
@@ -69,21 +72,74 @@ func getProp() {
 
 	p := props{}
 
-	errXml := xml.Unmarshal(xmlContent, &p)
-	if errXml != nil {
-		panic(errXml)
+	err = xml.Unmarshal(xmlContent, &p)
+	if err != nil {
+		panic(err)
 	}
 
-	fmt.Printf("%#v", p)
-	fmt.Println()
-	fmt.Println(p.ETag)
+	// 	fmt.Printf("%#v", p)
+	// 	fmt.Println(p.ETag)
+	return &p
+}
+
+func writeLocalVersion() bool {
+	p := getProp()
+
+	data := version{
+		CTag:         p.CTag,
+		LastModified: p.LastModified,
+	}
+
+	file, _ := json.MarshalIndent(data, "", " ")
+
+	err := ioutil.WriteFile(versionLocation, file, 0644)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+
+	return true
+}
+
+func readLocalVersion() string {
+	if _, err := os.Stat(versionLocation); os.IsNotExist(err) {
+		// if not yet exists get new version
+		fmt.Println("No local version found. Getting...")
+		writeLocalVersion()
+	}
+
+	versionData, err := ioutil.ReadFile(versionLocation)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ver := version{}
+	err = json.Unmarshal(versionData, &ver)
+
+	return ver.CTag
+}
+
+func compareVersion(ctag string) bool {
+	// check if version file exists
+	if _, err := os.Stat(versionLocation); os.IsNotExist(err) {
+		return false
+	}
+
+	// read version file
+	versionData, err := ioutil.ReadFile(versionLocation)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+	ver := version{}
+	err = json.Unmarshal(versionData, &ver)
+
+	return true
 }
 
 func main() {
-	config := getConf()
-	fmt.Println(config.Username)
-	fmt.Println(config.Url)
-
 	//fmt.Println(&conf.Username)
-	// 	getProp()
+
+	//p := getProp()
+	r := readLocalVersion()
+	fmt.Println(r)
 }
