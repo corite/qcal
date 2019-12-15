@@ -78,7 +78,6 @@ func getProp() *props {
 	}
 
 	// 	fmt.Printf("%#v", p)
-	// 	fmt.Println(p.ETag)
 	return &p
 }
 
@@ -104,7 +103,9 @@ func writeLocalVersion() bool {
 func readLocalVersion() string {
 	if _, err := os.Stat(versionLocation); os.IsNotExist(err) {
 		// if not yet exists get new version
-		fmt.Println("No local version found. Getting...")
+		fmt.Println("No local version found. Getting remote...")
+		// TODO get ics
+
 		writeLocalVersion()
 	}
 
@@ -118,28 +119,22 @@ func readLocalVersion() string {
 	return ver.CTag
 }
 
-func compareVersion(ctag string) bool {
-	// check if version file exists
-	if _, err := os.Stat(versionLocation); os.IsNotExist(err) {
-		return false
+func needsUpdate() bool {
+	p := getProp()
+	local := readLocalVersion()
+
+	if p.CTag != local {
+		return true
 	}
 
-	// read version file
-	versionData, err := ioutil.ReadFile(versionLocation)
-	if err != nil {
-		log.Fatal(err)
-		return false
-	}
-	ver := version{}
-	err = json.Unmarshal(versionData, &ver)
-
-	return true
+	return false
 }
 
 func main() {
 	//fmt.Println(&conf.Username)
 
 	//p := getProp()
-	r := readLocalVersion()
-	fmt.Println(r)
+	n := needsUpdate()
+	// 	r := readLocalVersion()
+	fmt.Println(n)
 }
