@@ -11,6 +11,7 @@ import (
 	"os"
 	// 	"regexp"
 	"flag"
+	"sort"
 	"strings"
 	"time"
 )
@@ -134,29 +135,51 @@ func showAppointments(startDate, endDate string) {
 
 	cald := Caldata{}
 
-	//fmt.Println(string(xmlContent))
+	// 	fmt.Println(string(xmlContent))
 	err = xml.Unmarshal(xmlContent, &cald)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	elements := []*event{}
 	for i := 0; i < len(cald.Caldata); i++ {
 		//fmt.Println(cald.Caldata[i].Data)
 		elem := ParseICS(cald.Caldata[i].Data)
-		fancyOutput(elem)
+		elem.Href = cald.Caldata[i].Href
+		// put all in slice
+		elements = append(elements, elem)
 	}
+
+	// time.Time sort by start time for events
+	sort.Slice(elements, func(i, j int) bool {
+		return elements[i].DTStart.Before(elements[j].DTStart)
+	})
+
+	// pretty print
+	for _, e := range elements {
+		//fancyOutput(value)
+		e.fancyOutput()
+	}
+
 }
 
-func fancyOutput(elem *event) {
-	//date := elem.Start.Format(dateFormat)
-	starttime := elem.DTStart.Format(RFC822)
-	fmt.Println(ColWhite + starttime + ColDefault + ` - ` + elem.Summary + ` (until ` + elem.DTEnd.Format(timeFormat) + `)`)
-	// 		fmt.Println(elem.Summary)
-	if elem.Description != "" {
-		fmt.Println("Beschreibung: " + elem.Description)
+//func fancyOutput(elem *event) {
+func (e event) fancyOutput() {
+	// whole day or greater
+	if e.DTStart.Format(timeFormat) == e.DTEnd.Format(timeFormat) {
+		fmt.Print(ColWhite + e.DTStart.Format(dateFormat) + ColDefault + ` - `)
+		fmt.Println(e.Summary)
+	} else {
+		fmt.Print(ColWhite + e.DTStart.Format(RFC822) + ColDefault + ` - `)
+		fmt.Println(e.Summary + ` (until ` + e.DTEnd.Format(timeFormat) + `)`)
 	}
-	if elem.Location != "" {
-		fmt.Println("Ort: " + elem.Location)
+
+	// 		fmt.Println(elem.Summary)
+	if e.Description != "" {
+		fmt.Println("Beschreibung: " + e.Description)
+	}
+	if e.Location != "" {
+		fmt.Println("Ort: " + e.Location)
 	}
 	fmt.Println()
 }
