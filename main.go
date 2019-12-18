@@ -9,13 +9,21 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
+	// 	"regexp"
+	"flag"
 	"strings"
+	"time"
 )
 
 const (
-	ConfigDir = ".config/qcal"
-	CacheDir  = ".cache/qcal"
+	ConfigDir  = ".config/qcal"
+	CacheDir   = ".cache/qcal"
+	dateFormat = "02.01.06"
+	timeFormat = "15:04"
+	RFC822     = "02.01.06 15:04"
+	ColWhite   = "\033[1;37m"
+	ColDefault = "\033[0m"
+	ColGreen   = "\033[0;32m"
 )
 
 var err string
@@ -30,12 +38,6 @@ type config struct {
 	Url      string
 }
 
-type version struct {
-	DisplayName  string
-	CTag         string
-	LastModified string
-}
-
 type props struct {
 	XMLName      xml.Name `xml:"multistatus"`
 	Href         string   `xml:"response>href"`
@@ -44,18 +46,6 @@ type props struct {
 	CTag         string   `xml:"response>propstat>prop>getctag"`
 	ETag         string   `xml:"response>propstat>prop>getetag"`
 	LastModified string   `xml:"response>propstat>prop>getlastmodified"`
-}
-
-type Caldata struct {
-	XMLName xml.Name     `xml:"multistatus"`
-	Caldata []Calelement `xml:"response"`
-}
-
-type Calelement struct {
-	XMLName xml.Name `xml:"response"`
-	Href    string   `xml:"href"`
-	ETag    string   `xml:"propstat>prop>getetag"`
-	Data    string   `xml:"propstat>prop>calendar-data"`
 }
 
 func getConf() *config {
@@ -100,61 +90,7 @@ func getProp() *props {
 	return &p
 }
 
-func DownloadInitial() {
-	config := getConf()
-	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-			<d:prop>
-				<d:getetag />
-				<c:calendar-data />
-			</d:prop>
-			<c:filter>
-				<c:comp-filter name="VCALENDAR" /> 
-			</c:filter>
-		    </c:calendar-query>`
-
-	req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
-	req.SetBasicAuth(config.Username, config.Password)
-
-	cli := &http.Client{}
-	resp, err := cli.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	xmlContent, _ := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-
-	cald := Caldata{}
-
-	err = xml.Unmarshal(xmlContent, &cald)
-	if err != nil {
-		panic(err)
-	}
-
-	// read version file for cal name
-	version := NeadLocalVersion()
-
-	// create dir if not exist for cal
-	os.MkdirAll(cacheLocation+"/"+version.DisplayName, os.ModePerm)
-
-	fmt.Println("Downloading all calendar entries...")
-
-	for i := 0; i < len(cald.Caldata); i++ {
-		// split href
-		s := strings.Split(cald.Caldata[i].Href, "/")
-		filename := s[len(s)-1]
-
-		// string to byte for writing
-		data := []byte(cald.Caldata[i].Data)
-		err := ioutil.WriteFile(cacheLocation+"/"+version.DisplayName+"/"+filename, data, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	fmt.Println("Downloading done.")
-}
-
-func showAppointments() {
+func showAppointments(startDate, endDate string) {
 	config := getConf()
 	/*xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 		<d:prop>
@@ -169,11 +105,10 @@ func showAppointments() {
 			</c:comp-filter>
 		</c:filter>
 	    </c:calendar-query>`*/
-	startDate := "20191214"
-	endDate := "20191216"
+	//startDate := "20191214"
+	//endDate := "20191216"
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 			<d:prop>
-				<d:getetag />
 				<c:calendar-data />
 			</d:prop>
 			<c:filter>
@@ -205,26 +140,46 @@ func showAppointments() {
 		log.Fatal(err)
 	}
 
-	// read version file for cal name
 	for i := 0; i < len(cald.Caldata); i++ {
 		//fmt.Println(cald.Caldata[i].Data)
-		re, _ := regexp.Compile(`SUMMARY(?:;LANGUAGE=[a-zA-Z\-]+)?.*?\n`)
-		summary := re.FindString(cald.Caldata[i].Data)
-
-		re, _ = regexp.Compile(`DESCRIPTION:.*?\n(?:\s+.*?\n)*`)
-		description := re.FindString(cald.Caldata[i].Data)
-
-		fmt.Println(TrimField(summary, `SUMMARY(?:;LANGUAGE=[a-zA-Z\-]+)?:`) + description)
+		elem := ParseICS(cald.Caldata[i].Data)
+		fancyOutput(elem)
 	}
 }
 
-func main() {
-	//fmt.Println(&conf.Username)
+func fancyOutput(elem *event) {
+	//date := elem.Start.Format(dateFormat)
+	starttime := elem.DTStart.Format(RFC822)
+	fmt.Println(ColWhite + starttime + ColDefault + ` - ` + elem.Summary + ` (until ` + elem.DTEnd.Format(timeFormat) + `)`)
+	// 		fmt.Println(elem.Summary)
+	if elem.Description != "" {
+		fmt.Println("Beschreibung: " + elem.Description)
+	}
+	if elem.Location != "" {
+		fmt.Println("Ort: " + elem.Location)
+	}
+	fmt.Println()
+}
 
+func main() {
 	//p := getProp()
-	//n := needsUpdate()
-	// 	r := readLocalVersion()
-	//fmt.Println(p.Href)
-	//downloadInitial()
-	showAppointments()
+
+	var today string
+	var startDate string
+	var endDate string
+	curTime := time.Now()
+	todayFormat := curTime.Format(IcsFormatWholeDay)
+	in10Days := curTime.Add(time.Hour * 240)
+	in10DaysFormat := in10Days.Format(IcsFormatWholeDay)
+
+	flag.StringVar(&today, "t", todayFormat, "Show appointments for today")
+	flag.StringVar(&startDate, "start", todayFormat, "start date")
+	flag.StringVar(&endDate, "end", in10DaysFormat, "end date")
+	flag.Parse()
+
+	showAppointments(startDate, endDate)
+	//	fmt.Printf("current time is :%s\n", curTime)
+	//	fmt.Printf("calculated time is :%s", in10Days)
+	//	fmt.Printf("calculated time is :%s", in10DaysFormat)
+
 }
