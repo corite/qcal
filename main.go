@@ -165,7 +165,7 @@ func showAppointments(startDate, endDate string) {
 
 //func fancyOutput(elem *event) {
 func (e event) fancyOutput() {
-	// whole day or greater
+	// whole day or more
 	if e.DTStart.Format(timeFormat) == e.DTEnd.Format(timeFormat) {
 		fmt.Print(ColWhite + e.DTStart.Format(dateFormat) + ColDefault + ` - `)
 		fmt.Println(e.Summary)
