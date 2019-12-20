@@ -135,13 +135,13 @@ func showAppointments(startDate, endDate string) {
 
 	cald := Caldata{}
 
-	// 	fmt.Println(string(xmlContent))
+	fmt.Println(string(xmlContent))
 	err = xml.Unmarshal(xmlContent, &cald)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	elements := []*event{}
+	elements := []*Event{}
 	for i := 0; i < len(cald.Caldata); i++ {
 		//fmt.Println(cald.Caldata[i].Data)
 		elem := ParseICS(cald.Caldata[i].Data)
@@ -152,7 +152,7 @@ func showAppointments(startDate, endDate string) {
 
 	// time.Time sort by start time for events
 	sort.Slice(elements, func(i, j int) bool {
-		return elements[i].DTStart.Before(elements[j].DTStart)
+		return elements[i].Start.Before(elements[j].Start)
 	})
 
 	// pretty print
@@ -164,14 +164,14 @@ func showAppointments(startDate, endDate string) {
 }
 
 //func fancyOutput(elem *event) {
-func (e event) fancyOutput() {
-	// whole day or more
-	if e.DTStart.Format(timeFormat) == e.DTEnd.Format(timeFormat) {
-		fmt.Print(ColWhite + e.DTStart.Format(dateFormat) + ColDefault + ` - `)
+func (e Event) fancyOutput() {
+	// whole day or greater
+	if e.Start.Format(timeFormat) == e.End.Format(timeFormat) {
+		fmt.Print(ColWhite + e.Start.Format(dateFormat) + ColDefault + ` - `)
 		fmt.Println(e.Summary)
 	} else {
-		fmt.Print(ColWhite + e.DTStart.Format(RFC822) + ColDefault + ` - `)
-		fmt.Println(e.Summary + ` (until ` + e.DTEnd.Format(timeFormat) + `)`)
+		fmt.Print(ColWhite + e.Start.Format(RFC822) + ColDefault + ` - `)
+		fmt.Println(e.Summary + ` (until ` + e.End.Format(timeFormat) + `)`)
 	}
 
 	// 		fmt.Println(elem.Summary)

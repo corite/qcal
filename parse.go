@@ -9,23 +9,31 @@ import (
 	"time"
 )
 
+var (
+	eventRRuleRegex      = regexp.MustCompile(`RRULE:.*?\n`)
+	freqRegex            = regexp.MustCompile(`FREQ=.*?;`)
+	eventSummaryRegex    = regexp.MustCompile(`SUMMARY:.*?\n`)
+	eventFreqWeeklyRegex = regexp.MustCompile(`RRULE:FREQ=WEEKLY\n`)
+	eventFreqYearlyRegex = regexp.MustCompile(`RRULE:FREQ=YEARLY\n`)
+)
+
 //  unixtimestamp
-const uts = "1136239445"
+const (
+	uts = "1136239445"
+	//ics date time format
+	IcsFormat = "20060102T150405Z"
+	// Y-m-d H:i:S time format
+	YmdHis = "2006-01-02 15:04:05"
+	// ics date format ( describes a whole day)
+	IcsFormatWholeDay = "20060102"
+)
 
-//ics date time format
-const IcsFormat = "20060102T150405Z"
-
-// Y-m-d H:i:S time format
-const YmdHis = "2006-01-02 15:04:05"
-
-// ics date format ( describes a whole day)
-const IcsFormatWholeDay = "20060102"
-
-type event struct {
+type Event struct {
 	Href        string
-	DTStart     time.Time
-	DTEnd       time.Time
+	Start       time.Time
+	End         time.Time
 	TZID        string
+	Freq        string
 	Summary     string
 	Description string
 	Location    string
@@ -82,6 +90,22 @@ func parseEventEnd(eventData string) (time.Time, string) {
 	return parseTimeField("DTEND", eventData)
 }
 
+func parseEventRRule(eventData string) string {
+	// 	freq := trimField(eventFreqWeeklyRegex.FindString(eventData), "RRULE:")
+	result := eventFreqWeeklyRegex.FindString(eventData)
+	if result != "" {
+		return trimField(result, "RRULE:FREQ=")
+	}
+	result = eventFreqYearlyRegex.FindString(eventData)
+	if result != "" {
+		return trimField(result, "RRULE:FREQ=")
+	}
+	//fmt.Println(result)
+
+	//fmt.Println(freq)
+	return trimField(result, "RRULE:FREQ=")
+}
+
 // parses the event summary
 func parseEventSummary(eventData string) string {
 	re, _ := regexp.Compile(`SUMMARY(?:;LANGUAGE=[a-zA-Z\-]+)?.*?\n`)
@@ -103,7 +127,7 @@ func parseEventLocation(eventData string) string {
 	return trimField(result, "LOCATION:")
 }
 
-func ParseICS(icsElem string) *event {
+func ParseICS(icsElem string) *Event {
 	// 	// starttime
 	// 	var dtstart time.Time
 	//
@@ -140,14 +164,18 @@ func ParseICS(icsElem string) *event {
 	tstart, tz := parseEventStart(icsElem)
 	tend, _ := parseEventEnd(icsElem)
 
-	data := event{
-		DTStart:     tstart,
-		DTEnd:       tend,
+	//	fmt.Println(parseEventRRule(icsElem))
+
+	data := Event{
+		Start:       tstart,
+		End:         tend,
 		TZID:        tz,
+		Freq:        parseEventRRule(icsElem),
 		Summary:     parseEventSummary(icsElem),
 		Description: parseEventDescription(icsElem),
 		Location:    parseEventLocation(icsElem),
 	}
 
+	fmt.Println(data.Freq)
 	return &data
 }
