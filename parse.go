@@ -26,6 +26,7 @@ const (
 	YmdHis = "2006-01-02 15:04:05"
 	// ics date format ( describes a whole day)
 	IcsFormatWholeDay = "20060102"
+	Weekday           = "Mon"
 )
 
 type Event struct {
@@ -94,6 +95,11 @@ func parseEventRRule(eventData string) string {
 	// 	freq := trimField(eventFreqWeeklyRegex.FindString(eventData), "RRULE:")
 	result := eventFreqWeeklyRegex.FindString(eventData)
 	if result != "" {
+		Startdate, _ := parseEventStart(eventData)
+		Weekday := Startdate.Format(Weekday)
+
+		fmt.Println(Weekday)
+		// 		fmt.Println(t)
 		return trimField(result, "RRULE:FREQ=")
 	}
 	result = eventFreqYearlyRegex.FindString(eventData)
