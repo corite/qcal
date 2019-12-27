@@ -91,14 +91,38 @@ func parseEventEnd(eventData string) (time.Time, string) {
 	return parseTimeField("DTEND", eventData)
 }
 
-func parseEventRRule(eventData string) string {
+func parseEventRRule(eventData string, startDate string, endDate string) string {
 	// 	freq := trimField(eventFreqWeeklyRegex.FindString(eventData), "RRULE:")
 	result := eventFreqWeeklyRegex.FindString(eventData)
 	if result != "" {
-		Startdate, _ := parseEventStart(eventData)
-		Weekday := Startdate.Format(Weekday)
+		eventStartDate, _ := parseEventStart(eventData)
+		eventWeekday := eventStartDate.Format(Weekday)
+		// weekday loop for recurring events
+		var t time.Time
+		t, _ = time.Parse(IcsFormatWholeDay, startDate)
+		var endDateFormated time.Time
+		endDateFormated, _ = time.Parse(IcsFormatWholeDay, endDate)
 
-		fmt.Println(Weekday)
+		//for t; t.Before(endDateFormated); t.AddDate(0, 0, 1) {
+		for {
+			if eventWeekday == t.Format(Weekday) {
+				// copy event
+				fmt.Println(t.Format(Weekday))
+			}
+			// increment date
+			t = t.AddDate(0, 0, 1)
+			// end for loop if incremented date = end date
+			if t.Equal(endDateFormated) {
+				break
+			}
+
+		}
+		// 		fmt.Println(t.Format(Weekday))
+		fmt.Println(endDate)
+
+		// 		curWeekday := startDate.Format(Weekday)
+
+		fmt.Println(eventWeekday)
 		// 		fmt.Println(t)
 		return trimField(result, "RRULE:FREQ=")
 	}
@@ -133,7 +157,7 @@ func parseEventLocation(eventData string) string {
 	return trimField(result, "LOCATION:")
 }
 
-func ParseICS(icsElem string) *Event {
+func ParseICS(icsElem string, startDate string, endDate string) *Event {
 	// 	// starttime
 	// 	var dtstart time.Time
 	//
@@ -176,7 +200,7 @@ func ParseICS(icsElem string) *Event {
 		Start:       tstart,
 		End:         tend,
 		TZID:        tz,
-		Freq:        parseEventRRule(icsElem),
+		Freq:        parseEventRRule(icsElem, startDate, endDate),
 		Summary:     parseEventSummary(icsElem),
 		Description: parseEventDescription(icsElem),
 		Location:    parseEventLocation(icsElem),

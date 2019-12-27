@@ -135,7 +135,7 @@ func showAppointments(startDate, endDate string) {
 
 	cald := Caldata{}
 
-	fmt.Println(string(xmlContent))
+	// 	fmt.Println(string(xmlContent))
 	err = xml.Unmarshal(xmlContent, &cald)
 	if err != nil {
 		log.Fatal(err)
@@ -144,7 +144,8 @@ func showAppointments(startDate, endDate string) {
 	elements := []*Event{}
 	for i := 0; i < len(cald.Caldata); i++ {
 		//fmt.Println(cald.Caldata[i].Data)
-		elem := ParseICS(cald.Caldata[i].Data)
+		//elem := ParseICS(cald.Caldata[i].Data)
+		elem := ParseICS(cald.Caldata[i].Data, startDate, endDate)
 		elem.Href = cald.Caldata[i].Href
 		// put all in slice
 		elements = append(elements, elem)
