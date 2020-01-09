@@ -21,12 +21,8 @@ var (
 const (
 	uts = "1136239445"
 	//ics date time format
-	IcsFormat = "20060102T150405Z"
 	// Y-m-d H:i:S time format
 	YmdHis = "2006-01-02 15:04:05"
-	// ics date format ( describes a whole day)
-	IcsFormatWholeDay = "20060102"
-	Weekday           = "Mon"
 )
 
 type Event struct {
@@ -52,7 +48,6 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 	reWholeDay, _ := regexp.Compile(fmt.Sprintf(`%s;VALUE=DATE:.*?\n`, fieldName))
 	//re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))?(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
 	re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
-	//re, _ := regexp.Compile(fmt.Sprintf(`%s;TZID=(.*?)?(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
 
 	resultWholeDay := reWholeDay.FindString(eventData)
 	var t time.Time
@@ -66,15 +61,19 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 		// event that has start hour and minute
 		result := re.FindStringSubmatch(eventData)
 
+		// why? TODO
 		if result == nil || len(result) < 4 {
-			return t, tzID
+			re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))?(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
+			result = re.FindStringSubmatch(eventData)
 		}
 
 		tzID = result[2]
 		dt := result[4]
 		if !strings.Contains(dt, "Z") {
 			dt = fmt.Sprintf("%sZ", dt)
+
 		}
+		//fmt.Println(dt)
 		t, _ = time.Parse(IcsFormat, dt)
 	}
 
@@ -107,7 +106,7 @@ func parseEventRRule(eventData string, startDate string, endDate string) string 
 		for {
 			if eventWeekday == t.Format(Weekday) {
 				// copy event
-				fmt.Println(t.Format(Weekday))
+				//fmt.Println(t.Format(Weekday))
 			}
 			// increment date
 			t = t.AddDate(0, 0, 1)
@@ -158,39 +157,6 @@ func parseEventLocation(eventData string) string {
 }
 
 func ParseICS(icsElem string, startDate string, endDate string) *Event {
-	// 	// starttime
-	// 	var dtstart time.Time
-	//
-	// 	var start string
-	// 	re, _ := regexp.Compile(`DTSTART;TZID=(.*?)?(;VALUE=DATE-TIME)?:(.*?)\n`)
-	// 	if re.FindString(icsElem) == "" {
-	// 		// 		fmt.Println("----------jetzt---")
-	// 		re, _ = regexp.Compile(`DTSTART?:(.*?)\n`)
-	// 		start = trimField(re.FindString(icsElem), `DTSTART?:`)
-	// 	} else {
-	// 		start = trimField(re.FindString(icsElem), `DTSTART;TZID=(.*?)?(;VALUE=DATE-TIME)?:`)
-	// 	}
-	// 	if !strings.Contains(start, "Z") {
-	// 		start = fmt.Sprintf("%sZ", start)
-	// 	}
-	// 	dtstart, _ = time.Parse(IcsFormat, start)
-	//
-	// 	// endtime
-	// 	var dtend time.Time
-	// 	var end string
-	// 	re, _ = regexp.Compile(`DTEND;TZID=(.*?)?(;VALUE=DATE-TIME)?:(.*?)\n`)
-	// 	if re.FindString(icsElem) == "" {
-	// 		// 		fmt.Println("----------jetzt---")
-	// 		re, _ = regexp.Compile(`DTEND?:(.*?)\n`)
-	// 		end = trimField(re.FindString(icsElem), `DTEND?:`)
-	// 	} else {
-	// 		end = trimField(re.FindString(icsElem), `DTEND;TZID=(.*?)?(;VALUE=DATE-TIME)?:`)
-	// 	}
-	// 	if !strings.Contains(end, "Z") {
-	// 		end = fmt.Sprintf("%sZ", end)
-	// 	}
-	// 	dtend, _ = time.Parse(IcsFormat, end)
-
 	tstart, tz := parseEventStart(icsElem)
 	tend, _ := parseEventEnd(icsElem)
 
