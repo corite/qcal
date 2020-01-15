@@ -81,20 +81,20 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 }
 
 // parses the event start time
-func parseEventStart(eventData string) (time.Time, string) {
-	return parseTimeField("DTSTART", eventData)
+func parseEventStart(eventData *string) (time.Time, string) {
+	return parseTimeField("DTSTART", *eventData)
 }
 
 // parses the event end time
-func parseEventEnd(eventData string) (time.Time, string) {
-	return parseTimeField("DTEND", eventData)
+func parseEventEnd(eventData *string) (time.Time, string) {
+	return parseTimeField("DTEND", *eventData)
 }
 
 func parseEventRRule(eventData string, startDate string, endDate string) string {
 	// 	freq := trimField(eventFreqWeeklyRegex.FindString(eventData), "RRULE:")
 	result := eventFreqWeeklyRegex.FindString(eventData)
 	if result != "" {
-		eventStartDate, _ := parseEventStart(eventData)
+		eventStartDate, _ := parseEventStart(&eventData)
 		eventWeekday := eventStartDate.Format(Weekday)
 		// weekday loop for recurring events
 		var t time.Time
@@ -136,29 +136,29 @@ func parseEventRRule(eventData string, startDate string, endDate string) string 
 }
 
 // parses the event summary
-func parseEventSummary(eventData string) string {
+func parseEventSummary(eventData *string) string {
 	re, _ := regexp.Compile(`SUMMARY(?:;LANGUAGE=[a-zA-Z\-]+)?.*?\n`)
-	result := re.FindString(eventData)
+	result := re.FindString(*eventData)
 	return trimField(result, `SUMMARY(?:;LANGUAGE=[a-zA-Z\-]+)?:`)
 }
 
-func parseEventDescription(eventData string) string {
+func parseEventDescription(eventData *string) string {
 	re, _ := regexp.Compile(`DESCRIPTION:.*?\n(?:\s+.*?\n)*`)
-	better := strings.Replace(re.FindString(eventData), "\n ", "", -1)
+	better := strings.Replace(re.FindString(*eventData), "\n ", "", -1)
 	better = strings.Replace(better, "\\n", " ", -1)
 	better = strings.Replace(better, "\\", "", -1)
 	return trimField(better, "DESCRIPTION:")
 }
 
-func parseEventLocation(eventData string) string {
+func parseEventLocation(eventData *string) string {
 	re, _ := regexp.Compile(`LOCATION:.*?\n`)
-	result := re.FindString(eventData)
+	result := re.FindString(*eventData)
 	return trimField(result, "LOCATION:")
 }
 
 func ParseICS(icsElem string, startDate string, endDate string) *Event {
-	tstart, tz := parseEventStart(icsElem)
-	tend, _ := parseEventEnd(icsElem)
+	tstart, tz := parseEventStart(&icsElem)
+	tend, _ := parseEventEnd(&icsElem)
 
 	//	fmt.Println(parseEventRRule(icsElem))
 
@@ -167,9 +167,9 @@ func ParseICS(icsElem string, startDate string, endDate string) *Event {
 		End:         tend,
 		TZID:        tz,
 		Freq:        parseEventRRule(icsElem, startDate, endDate),
-		Summary:     parseEventSummary(icsElem),
-		Description: parseEventDescription(icsElem),
-		Location:    parseEventLocation(icsElem),
+		Summary:     parseEventSummary(&icsElem),
+		Description: parseEventDescription(&icsElem),
+		Location:    parseEventLocation(&icsElem),
 	}
 
 	fmt.Println(data.Freq)

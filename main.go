@@ -2,9 +2,8 @@ package main
 
 import (
 	// 	"bytes"
-	"encoding/json"
 	"encoding/xml"
-	"fmt"
+	//"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -58,48 +57,6 @@ type props struct {
 	LastModified string   `xml:"response>propstat>prop>getlastmodified"`
 }
 
-func getConf() *config {
-	configData, err := ioutil.ReadFile(configLocation)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//var conf config
-	conf := config{}
-	err = json.Unmarshal(configData, &conf)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-
-	//fmt.Println(conf.Username)
-	return &conf
-}
-
-func getProp() *props {
-	config := getConf()
-	req, err := http.NewRequest("PROPFIND", config.Url, nil)
-	req.SetBasicAuth(config.Username, config.Password)
-
-	cli := &http.Client{}
-	resp, err := cli.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	xmlContent, _ := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-
-	p := props{}
-
-	err = xml.Unmarshal(xmlContent, &p)
-	if err != nil {
-		panic(err)
-	}
-
-	//fmt.Printf("%#v", string(xmlContent))
-	return &p
-}
-
 func fetchCalData(startDate, endDate string) Caldata {
 	config := getConf()
 
@@ -138,102 +95,115 @@ func fetchCalData(startDate, endDate string) Caldata {
 	return cald
 }
 
+func processEventsWeekly(eventData *string, startDate, endDate string, elementsP *[]Event) {
+	eventStartDate, _ := parseEventStart(eventData)
+	eventWeekday := eventStartDate.Format(Weekday)
+	// weekday loop for recurring events
+	var t time.Time
+	t, _ = time.Parse(IcsFormatWholeDay, startDate)
+
+	endDateFormated, _ := time.Parse(IcsFormatWholeDay, endDate)
+
+	//for t; t.Equal(endDateFormated); t.AddDate(0, 0, 1) {
+	for {
+		if eventWeekday == t.Format(Weekday) {
+			// copy event
+			// add time from event origin to this date
+			t2, _ := time.Parse(RFC822, t.Format(dateFormat)+` `+eventStartDate.Format(timeFormat))
+			tend, _ := parseEventEnd(eventData)
+			data := Event{
+				Start: t2,
+				End:   tend,
+				//Freq:        parseEventRRule(cald.Caldata[i].Data, startDate, endDate),
+				Summary:     parseEventSummary(eventData),
+				Description: parseEventDescription(eventData),
+				Location:    parseEventLocation(eventData),
+			}
+			//data.Href = *eventData.Href
+			// put all in slice
+			*elementsP = append(*elementsP, data)
+		}
+		// increment date
+		t = t.AddDate(0, 0, 1)
+		// end loop if incremented date = end date
+		if t.Equal(endDateFormated) {
+			break
+		}
+
+	}
+
+}
+
+func processEventsYearly(eventData *string, startDate, endDate string, elementsP *[]Event) {
+	eventStartDate, _ := parseEventStart(eventData)
+	startDateFormated, _ := time.Parse(IcsFormatWholeDay, startDate)
+	endDateFormated, _ := time.Parse(IcsFormatWholeDay, endDate)
+
+	for {
+		// add date and time from event origin to this year
+		t2, _ := time.Parse(IcsFormat, startDateFormated.Format(IcsFormatYear)+eventStartDate.Format(IcsFormatMonthDay)+eventStartDate.Format(IcsFormatTime))
+		tend, _ := parseEventEnd(eventData)
+		data := Event{
+			Start: t2,
+			End:   tend,
+			//Freq:        parseEventRRule(cald.Caldata[i].Data, startDate, endDate),
+			Summary:     parseEventSummary(eventData),
+			Description: parseEventDescription(eventData),
+			Location:    parseEventLocation(eventData),
+		}
+		//data.Href = cald.Caldata[i].Href
+		// put all in slice
+		*elementsP = append(*elementsP, data)
+		// increment year
+		startDateFormated = startDateFormated.AddDate(1, 0, 0)
+		//fmt.Println(startDateFormated.Format(IcsFormat))
+		// end loop if incremented date after end date
+		if startDateFormated.After(endDateFormated) {
+			break
+		}
+
+	}
+
+}
+
 func showAppointments(startDate, endDate string) {
-	elements := []*Event{}
+	//elements := []*Event{}
+	var elements []Event
 
 	cald := fetchCalData(startDate, endDate)
 
 	for i := 0; i < len(cald.Caldata); i++ {
+		eventData := cald.Caldata[i].Data
+
 		// week frequency
-		result := eventFreqWeeklyRegex.FindString(cald.Caldata[i].Data)
+		result := eventFreqWeeklyRegex.FindString(eventData)
 		if result != "" {
-			eventStartDate, _ := parseEventStart(cald.Caldata[i].Data)
-			eventWeekday := eventStartDate.Format(Weekday)
-			// weekday loop for recurring events
-			var t time.Time
-			t, _ = time.Parse(IcsFormatWholeDay, startDate)
-
-			endDateFormated, _ := time.Parse(IcsFormatWholeDay, endDate)
-
-			//for t; t.Equal(endDateFormated); t.AddDate(0, 0, 1) {
-			for {
-				if eventWeekday == t.Format(Weekday) {
-					// copy event
-					// add time from event origin to this date
-					t2, _ := time.Parse(RFC822, t.Format(dateFormat)+` `+eventStartDate.Format(timeFormat))
-					tend, _ := parseEventEnd(cald.Caldata[i].Data)
-					data := Event{
-						Start: t2,
-						End:   tend,
-						//Freq:        parseEventRRule(cald.Caldata[i].Data, startDate, endDate),
-						Summary:     parseEventSummary(cald.Caldata[i].Data),
-						Description: parseEventDescription(cald.Caldata[i].Data),
-						Location:    parseEventLocation(cald.Caldata[i].Data),
-					}
-					data.Href = cald.Caldata[i].Href
-					// put all in slice
-					elements = append(elements, &data)
-				}
-				// increment date
-				t = t.AddDate(0, 0, 1)
-				// end loop if incremented date = end date
-				if t.Equal(endDateFormated) {
-					break
-				}
-
-			}
+			processEventsWeekly(&eventData, startDate, endDate, &elements)
+			continue
 		}
 
 		// year frequency
-		result = eventFreqYearlyRegex.FindString(cald.Caldata[i].Data)
+		result = eventFreqYearlyRegex.FindString(eventData)
 		if result != "" {
-			eventStartDate, _ := parseEventStart(cald.Caldata[i].Data)
-			startDateFormated, _ := time.Parse(IcsFormatWholeDay, startDate)
-			endDateFormated, _ := time.Parse(IcsFormatWholeDay, endDate)
-
-			for {
-				// copy event
-				// add date and time from event origin to this year
-				t2, _ := time.Parse(IcsFormat, startDateFormated.Format(IcsFormatYear)+eventStartDate.Format(IcsFormatMonthDay)+eventStartDate.Format(IcsFormatTime))
-				tend, _ := parseEventEnd(cald.Caldata[i].Data)
-				data := Event{
-					Start: t2,
-					End:   tend,
-					//Freq:        parseEventRRule(cald.Caldata[i].Data, startDate, endDate),
-					Summary:     parseEventSummary(cald.Caldata[i].Data),
-					Description: parseEventDescription(cald.Caldata[i].Data),
-					Location:    parseEventLocation(cald.Caldata[i].Data),
-				}
-				data.Href = cald.Caldata[i].Href
-				// put all in slice
-				elements = append(elements, &data)
-				// increment year
-				startDateFormated = startDateFormated.AddDate(1, 0, 0)
-				//fmt.Println(startDateFormated.Format(IcsFormat))
-				// end loop if incremented date after end date
-				if startDateFormated.After(endDateFormated) {
-					break
-				}
-
-			}
+			processEventsYearly(&eventData, startDate, endDate, &elements)
+			continue
 		}
 
 		if result == "" {
-			tstart, tz := parseEventStart(cald.Caldata[i].Data)
-			tend, _ := parseEventEnd(cald.Caldata[i].Data)
+			tstart, tz := parseEventStart(&eventData)
+			tend, _ := parseEventEnd(&eventData)
 
 			data := Event{
-				Start: tstart,
-				End:   tend,
-				TZID:  tz,
-				//Freq:        parseEventRRule(cald.Caldata[i].Data, startDate, endDate),
-				Summary:     parseEventSummary(cald.Caldata[i].Data),
-				Description: parseEventDescription(cald.Caldata[i].Data),
-				Location:    parseEventLocation(cald.Caldata[i].Data),
+				Start:       tstart,
+				End:         tend,
+				TZID:        tz,
+				Summary:     parseEventSummary(&eventData),
+				Description: parseEventDescription(&eventData),
+				Location:    parseEventLocation(&eventData),
 			}
 			data.Href = cald.Caldata[i].Href
 			// put all in slice
-			elements = append(elements, &data)
+			elements = append(elements, data)
 		}
 	}
 
@@ -244,44 +214,12 @@ func showAppointments(startDate, endDate string) {
 
 	// pretty print
 	for _, e := range elements {
-		//fancyOutput(value)
 		e.fancyOutput()
 	}
 
 }
 
-//func fancyOutput(elem *event) {
-func (e Event) fancyOutput() {
-	// whole day or greater
-	if e.Start.Format(timeFormat) == e.End.Format(timeFormat) {
-		fmt.Print(ColGreen + e.Start.Format(dateFormat) + ColDefault + ` `)
-		fmt.Printf(`%6s`, ` `)
-		fmt.Println(e.Summary)
-		/*		if e.Start.Format(dateFormat) == e.End.Format(dateFormat) {
-					fmt.Println(e.Summary)
-				} else {
-					fmt.Println(e.Summary + ` (until ` + e.End.Format(dateFormat) + `)`)
-				}*/
-	} else {
-		fmt.Print(ColGreen + e.Start.Format(RFC822) + ColDefault + ` `)
-		fmt.Println(e.Summary + ` (until ` + e.End.Format(timeFormat) + `)`)
-	}
-
-	// 		fmt.Println(elem.Summary)
-	if e.Description != "" {
-		fmt.Printf(`%15s`, ` `)
-		fmt.Println(`Beschreibung: ` + e.Description)
-	}
-	if e.Location != "" {
-		fmt.Printf(`%15s`, ` `)
-		fmt.Println("Ort: " + e.Location)
-	}
-	//fmt.Println()
-}
-
 func main() {
-	//p := getProp()
-
 	var today string
 	var startDate string
 	var endDate string
@@ -299,7 +237,5 @@ func main() {
 	//endDate = "20210902"
 	showAppointments(startDate, endDate)
 	//	fmt.Printf("current time is :%s\n", curTime)
-	//	fmt.Printf("calculated time is :%s", in10Days)
-	//	fmt.Printf("calculated time is :%s", in10DaysFormat)
 
 }
