@@ -3,7 +3,7 @@ package main
 import (
 	// 	"bytes"
 	"encoding/xml"
-	//"fmt"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -35,27 +35,23 @@ const (
 	ColGreen            = "\033[0;32m"
 )
 
+type Caldata struct {
+	XMLName xml.Name     `xml:"multistatus"`
+	Caldata []Calelement `xml:"response"`
+}
+
+type Calelement struct {
+	XMLName xml.Name `xml:"response"`
+	Href    string   `xml:"href"`
+	ETag    string   `xml:"propstat>prop>getetag"`
+	Data    string   `xml:"propstat>prop>calendar-data"`
+}
+
 var err string
 var homedir string = os.Getenv("HOME")
 var configLocation string = (homedir + "/" + ConfigDir + "/config.json")
 var cacheLocation string = (homedir + "/" + CacheDir)
 var versionLocation string = (cacheLocation + "/version.json")
-
-type config struct {
-	Username string
-	Password string
-	Url      string
-}
-
-type props struct {
-	XMLName      xml.Name `xml:"multistatus"`
-	Href         string   `xml:"response>href"`
-	DisplayName  string   `xml:"response>propstat>prop>displayname"`
-	Color        string   `xml:"response>propstat>prop>calendar-color"`
-	CTag         string   `xml:"response>propstat>prop>getctag"`
-	ETag         string   `xml:"response>propstat>prop>getetag"`
-	LastModified string   `xml:"response>propstat>prop>getlastmodified"`
-}
 
 func fetchCalData(startDate, endDate string) Caldata {
 	config := getConf()
@@ -161,9 +157,7 @@ func processEventsYearly(eventData *string, startDate, endDate string, elementsP
 		if startDateFormated.After(endDateFormated) {
 			break
 		}
-
 	}
-
 }
 
 func showAppointments(startDate, endDate string) {
@@ -192,6 +186,8 @@ func showAppointments(startDate, endDate string) {
 		if result == "" {
 			tstart, tz := parseEventStart(&eventData)
 			tend, _ := parseEventEnd(&eventData)
+			fmt.Println(eventData)
+			fmt.Println(cald.Caldata[i].Href)
 
 			data := Event{
 				Start:       tstart,
@@ -216,7 +212,6 @@ func showAppointments(startDate, endDate string) {
 	for _, e := range elements {
 		e.fancyOutput()
 	}
-
 }
 
 func main() {
@@ -233,9 +228,8 @@ func main() {
 	flag.StringVar(&endDate, "end", in10DaysFormat, "end date")
 	flag.Parse()
 
-	//startDate = "20191001"
+	//startDate = "20190801"
 	//endDate = "20210902"
 	showAppointments(startDate, endDate)
 	//	fmt.Printf("current time is :%s\n", curTime)
-
 }
