@@ -88,8 +88,7 @@ func fetchCalData(startDate, endDate, singleCal string) Caldata {
 
 	//for i := 0; i < len(config.Calendars); i++ {
 	for i := range config.Calendars {
-		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" {
-			//req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
+		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" { // sprintf bc convert int to string
 			req, err := http.NewRequest("REPORT", config.Calendars[i].Url, strings.NewReader(xmlBody))
 			req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
 
@@ -166,7 +165,7 @@ func getProp() props {
 		}
 
 		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
-		fmt.Println(p.DisplayName)
+		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + p.DisplayName)
 		fmt.Println(p.Color)
 	}
 
@@ -182,6 +181,7 @@ func main() {
 	flag.StringVar(&singleCal, "c", "all", "Show only single calendar (number)")
 	showtoday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")
+	showCalendars := flag.Bool("C", false, "Show available calendars")
 	flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
 	flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
 	flag.Parse()
@@ -192,10 +192,14 @@ func main() {
 	if *show7days {
 		endDate = curTime.AddDate(0, 0, 7).Format(IcsFormatWholeDay) // today till 7 days
 	}
+	if *showCalendars {
+		getProp()
+	} else {
 
-	//startDate = "20210301"
-	//endDate = "20210402"
-	//getProp()
-	showAppointments(startDate, endDate, singleCal)
-	//	fmt.Printf("current time is :%s\n", curTime)
+		//startDate = "20210301"
+		//endDate = "20210402"
+		//getProp()
+		showAppointments(startDate, endDate, singleCal)
+		//	fmt.Printf("current time is :%s\n", curTime)
+	}
 }
