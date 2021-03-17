@@ -141,21 +141,27 @@ func showAppointments(startDate, endDate string) {
 }
 
 func main() {
-	var today string
+	//var today string
 	var startDate string
 	var endDate string
 	curTime := time.Now()
 	todayFormat := curTime.Format(IcsFormatWholeDay)
+	intomorrow := curTime.AddDate(0, 0, 1)
+	intomorrowFormat := intomorrow.Format(IcsFormatWholeDay)
 	//in10Days := curTime.AddDate(0, 0, 10)
 	//in10DaysFormat := in10Days.Format(IcsFormatWholeDay)
 	in2Months := curTime.AddDate(0, 2, 0)
 	in2MonthsFormat := in2Months.Format(IcsFormatWholeDay)
 
-	flag.StringVar(&today, "t", todayFormat, "Show appointments for today")
-	flag.StringVar(&startDate, "start", todayFormat, "start date")
+	showtoday := flag.Bool("t", false, "Show appointments for today")
+	flag.StringVar(&startDate, "s", todayFormat, "start date")
 	//flag.StringVar(&endDate, "end", in10DaysFormat, "end date")
-	flag.StringVar(&endDate, "end", in2MonthsFormat, "end date")
+	flag.StringVar(&endDate, "e", in2MonthsFormat, "end date")
 	flag.Parse()
+
+	if *showtoday == true {
+		endDate = intomorrowFormat
+	}
 
 	//startDate = "20210301"
 	//endDate = "20210402"

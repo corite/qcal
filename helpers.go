@@ -64,13 +64,13 @@ func (e Event) fancyOutput() {
 		//fmt.Println(e)
 		//if e.Start.Format(dateFormat) == e.End.Format(dateFormat) {
 		if e.Start.Add(time.Hour*24) == e.End {
-			fmt.Println(ColWhite + e.Summary + ColDefault)
+			fmt.Println(ColDefault + e.Summary + ColDefault)
 		} else {
-			fmt.Println(ColWhite + e.Summary + ColDefault + ` (until ` + e.End.Format(dateFormat) + `)`)
+			fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(dateFormat) + `)`)
 		}
 	} else {
 		fmt.Print(ColGreen + e.Start.Format(RFC822) + ColDefault + ` `)
-		fmt.Println(ColWhite + e.Summary + ColDefault + ` (until ` + e.End.Format(timeFormat) + `)`)
+		fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(timeFormat) + `)`)
 	}
 
 	//fmt.Println(e.Href)
