@@ -4,7 +4,7 @@ import (
 	// 	"bytes"
 	"encoding/xml"
 	"flag"
-	//"fmt"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -86,9 +86,8 @@ func fetchCalData(startDate, endDate string) Caldata {
 
 	cald := Caldata{}
 
-	for i := 0; i < len(config.Calendars); i++ {
-		//calendars := []config.Calendars{}
-		//for i := range calendars {
+	//for i := 0; i < len(config.Calendars); i++ {
+	for i := range config.Calendars {
 		//req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
 		req, err := http.NewRequest("REPORT", config.Calendars[i].Url, strings.NewReader(xmlBody))
 		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
@@ -140,6 +139,38 @@ func showAppointments(startDate, endDate string) {
 	}
 }
 
+func getProp() props {
+	// TODO
+	config := getConf()
+	p := props{}
+	for i := range config.Calendars {
+		//req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
+		req, err := http.NewRequest("PROPFIND", config.Calendars[i].Url, nil)
+		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
+
+		cli := &http.Client{}
+		resp, err := cli.Do(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		xmlContent, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		//fmt.Println(string(xmlContent))
+		err = xml.Unmarshal(xmlContent, &p)
+		if err != nil {
+			panic(err)
+		}
+
+		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
+		fmt.Println(p.DisplayName)
+		fmt.Println(p.Color)
+	}
+
+	return p
+}
+
 func main() {
 	var startDate string
 	var endDate string
@@ -160,6 +191,7 @@ func main() {
 
 	//startDate = "20210301"
 	//endDate = "20210402"
+	//getProp()
 	showAppointments(startDate, endDate)
 	//	fmt.Printf("current time is :%s\n", curTime)
 }
