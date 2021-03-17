@@ -4,6 +4,7 @@ import (
 	// 	"bytes"
 	"encoding/xml"
 	"flag"
+	//"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -101,7 +102,7 @@ func fetchCalData(startDate, endDate string) Caldata {
 		xmlContent, _ := ioutil.ReadAll(resp.Body)
 		defer resp.Body.Close()
 
-		// 	fmt.Println(string(xmlContent))
+		//fmt.Println(string(xmlContent))
 		err = xml.Unmarshal(xmlContent, &cald)
 		if err != nil {
 			log.Fatal(err)
@@ -156,8 +157,8 @@ func main() {
 	flag.StringVar(&endDate, "end", in2MonthsFormat, "end date")
 	flag.Parse()
 
-	//startDate = "20191201"
-	//endDate = "20210902"
+	//startDate = "20210301"
+	//endDate = "20210402"
 	//getConf()
 	showAppointments(startDate, endDate)
 	//	fmt.Printf("current time is :%s\n", curTime)
