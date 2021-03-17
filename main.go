@@ -68,7 +68,7 @@ var calSkel = `BEGIN:VCALENDAR
 		END:VEVENT
 		END:VCALENDAR`
 
-func fetchCalData(startDate, endDate string) Caldata {
+func fetchCalData(startDate, endDate, singleCal string) Caldata {
 	config := getConf()
 
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -88,33 +88,35 @@ func fetchCalData(startDate, endDate string) Caldata {
 
 	//for i := 0; i < len(config.Calendars); i++ {
 	for i := range config.Calendars {
-		//req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
-		req, err := http.NewRequest("REPORT", config.Calendars[i].Url, strings.NewReader(xmlBody))
-		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
+		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" {
+			//req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
+			req, err := http.NewRequest("REPORT", config.Calendars[i].Url, strings.NewReader(xmlBody))
+			req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
 
-		cli := &http.Client{}
-		resp, err := cli.Do(req)
-		if err != nil {
-			log.Fatal(err)
-		}
+			cli := &http.Client{}
+			resp, err := cli.Do(req)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		xmlContent, _ := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
+			xmlContent, _ := ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
 
-		//fmt.Println(string(xmlContent))
-		err = xml.Unmarshal(xmlContent, &cald)
-		if err != nil {
-			log.Fatal(err)
+			//fmt.Println(string(xmlContent))
+			err = xml.Unmarshal(xmlContent, &cald)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 
 	return cald
 }
 
-func showAppointments(startDate, endDate string) {
+func showAppointments(startDate, endDate, singleCal string) {
 	var elements []Event
 
-	cald := fetchCalData(startDate, endDate)
+	cald := fetchCalData(startDate, endDate, singleCal)
 
 	for i := 0; i < len(cald.Caldata); i++ {
 		eventData := cald.Caldata[i].Data
@@ -174,8 +176,10 @@ func getProp() props {
 func main() {
 	var startDate string
 	var endDate string
+	var singleCal string
 	curTime := time.Now()
 
+	flag.StringVar(&singleCal, "c", "all", "Show only single calendar (number)")
 	showtoday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")
 	flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
@@ -192,6 +196,6 @@ func main() {
 	//startDate = "20210301"
 	//endDate = "20210402"
 	//getProp()
-	showAppointments(startDate, endDate)
+	showAppointments(startDate, endDate, singleCal)
 	//	fmt.Printf("current time is :%s\n", curTime)
 }
