@@ -49,7 +49,7 @@ type Calelement struct {
 
 var err string
 var homedir string = os.Getenv("HOME")
-var configLocation string = (homedir + "/" + ConfigDir + "/config.json")
+var configLocation string = (homedir + "/" + ConfigDir + "/config-2.json")
 var cacheLocation string = (homedir + "/" + CacheDir)
 var versionLocation string = (cacheLocation + "/version.json")
 var timezone, _ = time.Now().Zone()
@@ -83,26 +83,29 @@ func fetchCalData(startDate, endDate string) Caldata {
 			</c:filter>
 		    </c:calendar-query>`
 
-	//for i := 0; i < len(config.[]Calendars); i++ {
-	req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
-	//req, err := http.NewRequest("REPORT", config.Calendars[0].Url, strings.NewReader(xmlBody))
-	req.SetBasicAuth(config.Username, config.Password)
-	//}
-
-	cli := &http.Client{}
-	resp, err := cli.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	xmlContent, _ := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-
 	cald := Caldata{}
-	// 	fmt.Println(string(xmlContent))
-	err = xml.Unmarshal(xmlContent, &cald)
-	if err != nil {
-		log.Fatal(err)
+
+	for i := 0; i < len(config.Calendars); i++ {
+		//calendars := []config.Calendars{}
+		//for i := range calendars {
+		//req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
+		req, err := http.NewRequest("REPORT", config.Calendars[i].Url, strings.NewReader(xmlBody))
+		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
+
+		cli := &http.Client{}
+		resp, err := cli.Do(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		xmlContent, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		// 	fmt.Println(string(xmlContent))
+		err = xml.Unmarshal(xmlContent, &cald)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	return cald
@@ -155,6 +158,7 @@ func main() {
 
 	//startDate = "20191201"
 	//endDate = "20210902"
+	//getConf()
 	showAppointments(startDate, endDate)
 	//	fmt.Printf("current time is :%s\n", curTime)
 }

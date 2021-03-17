@@ -9,21 +9,22 @@ import (
 	"time"
 )
 
+/*
 type config struct {
 	Username string
 	Password string
 	Url      string
 }
+*/
 
-/*
 type config struct {
-	Calendars struct {
+	Calendars []struct {
 		Username string
 		Password string
 		Url      string
-	} `json:"Calendars"`
+	}
 }
-*/
+
 type props struct {
 	XMLName      xml.Name `xml:"multistatus"`
 	Href         string   `xml:"response>href"`
@@ -42,6 +43,7 @@ func getConf() *config {
 
 	conf := config{}
 	err = json.Unmarshal(configData, &conf)
+	//fmt.Println(conf)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
