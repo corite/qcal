@@ -34,7 +34,6 @@ type Event struct {
 	Summary     string
 	Description string
 	Location    string
-	WholeDay    bool
 }
 
 func trimField(field, cutset string) string {
@@ -43,11 +42,17 @@ func trimField(field, cutset string) string {
 	return strings.TrimRight(cutsetRem, "\r\n")
 }
 
-// parses the event start time
+func explodeEvent(eventData *string) (string, string) {
+	reEvent, _ := regexp.Compile(`(BEGIN:VEVENT(.*\n)*?END:VEVENT\r?\n)`)
+	Event := reEvent.FindString(*eventData)
+	calInfo := reEvent.ReplaceAllString(*eventData, "")
+	return Event, calInfo
+}
+
 func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 	reWholeDay, _ := regexp.Compile(fmt.Sprintf(`%s;VALUE=DATE:.*?\n`, fieldName))
-	//re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))?(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
-	re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
+	re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))?(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
+	//re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
 
 	resultWholeDay := reWholeDay.FindString(eventData)
 	var t time.Time
@@ -61,10 +66,8 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 		// event that has start hour and minute
 		result := re.FindStringSubmatch(eventData)
 
-		// why? TODO
 		if result == nil || len(result) < 4 {
-			re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))?(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
-			result = re.FindStringSubmatch(eventData)
+			return t, tzID
 		}
 
 		tzID = result[2]
@@ -80,62 +83,14 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 	return t, tzID
 }
 
-// parses the event start time
 func parseEventStart(eventData *string) (time.Time, string) {
 	return parseTimeField("DTSTART", *eventData)
 }
 
-// parses the event end time
 func parseEventEnd(eventData *string) (time.Time, string) {
 	return parseTimeField("DTEND", *eventData)
 }
 
-func parseEventRRule(eventData string, startDate string, endDate string) string {
-	// 	freq := trimField(eventFreqWeeklyRegex.FindString(eventData), "RRULE:")
-	result := eventFreqWeeklyRegex.FindString(eventData)
-	if result != "" {
-		eventStartDate, _ := parseEventStart(&eventData)
-		eventWeekday := eventStartDate.Format(Weekday)
-		// weekday loop for recurring events
-		var t time.Time
-		t, _ = time.Parse(IcsFormatWholeDay, startDate)
-		var endDateFormated time.Time
-		endDateFormated, _ = time.Parse(IcsFormatWholeDay, endDate)
-
-		//for t; t.Before(endDateFormated); t.AddDate(0, 0, 1) {
-		for {
-			if eventWeekday == t.Format(Weekday) {
-				// copy event
-				//fmt.Println(t.Format(Weekday))
-			}
-			// increment date
-			t = t.AddDate(0, 0, 1)
-			// end for loop if incremented date = end date
-			if t.Equal(endDateFormated) {
-				break
-			}
-
-		}
-		// 		fmt.Println(t.Format(Weekday))
-		fmt.Println(endDate)
-
-		// 		curWeekday := startDate.Format(Weekday)
-
-		fmt.Println(eventWeekday)
-		// 		fmt.Println(t)
-		return trimField(result, "RRULE:FREQ=")
-	}
-	result = eventFreqYearlyRegex.FindString(eventData)
-	if result != "" {
-		return trimField(result, "RRULE:FREQ=")
-	}
-	//fmt.Println(result)
-
-	//fmt.Println(freq)
-	return trimField(result, "RRULE:FREQ=")
-}
-
-// parses the event summary
 func parseEventSummary(eventData *string) string {
 	re, _ := regexp.Compile(`SUMMARY(?:;LANGUAGE=[a-zA-Z\-]+)?.*?\n`)
 	result := re.FindString(*eventData)
@@ -156,22 +111,67 @@ func parseEventLocation(eventData *string) string {
 	return trimField(result, "LOCATION:")
 }
 
-func ParseICS(icsElem string, startDate string, endDate string) *Event {
-	tstart, tz := parseEventStart(&icsElem)
-	tend, _ := parseEventEnd(&icsElem)
+func parseEventRRule(eventData *string) string {
+	re, _ := regexp.Compile(`RRULE:.*?\n`)
+	result := re.FindString(*eventData)
+	return trimField(result, "RRULE:")
+}
 
-	//	fmt.Println(parseEventRRule(icsElem))
+func parseMain(eventData *string, elementsP *[]Event, startDate, endDate, freq, href string) {
+	eventStart, tzId := parseEventStart(eventData)
+	eventEnd, _ := parseEventEnd(eventData)
+	start, _ := time.Parse(IcsFormatWholeDay, startDate)
+	end, _ := time.Parse(IcsFormatWholeDay, endDate)
 
-	data := Event{
-		Start:       tstart,
-		End:         tend,
-		TZID:        tz,
-		Freq:        parseEventRRule(icsElem, startDate, endDate),
-		Summary:     parseEventSummary(&icsElem),
-		Description: parseEventDescription(&icsElem),
-		Location:    parseEventLocation(&icsElem),
+	var years, days, months int
+	switch freq {
+	case "DAILY":
+		days = 1
+		months = 0
+		years = 0
+		break
+	case "WEEKLY":
+		days = 7
+		months = 0
+		years = 0
+		break
+	case "MONTHLY":
+		days = 0
+		months = 1
+		years = 0
+		break
+	case "YEARLY":
+		days = 0
+		months = 0
+		years = 1
+		break
 	}
 
-	fmt.Println(data.Freq)
-	return &data
+	for {
+		if inTimeSpan(start, end, eventStart) {
+			data := Event{
+				Href:        href,
+				Start:       eventStart,
+				End:         eventEnd,
+				TZID:        tzId,
+				Summary:     parseEventSummary(eventData),
+				Description: parseEventDescription(eventData),
+				Location:    parseEventLocation(eventData),
+			}
+			*elementsP = append(*elementsP, data)
+
+		}
+
+		if freq == "" {
+			break
+		}
+
+		eventStart = eventStart.AddDate(years, months, days)
+		eventEnd = eventEnd.AddDate(years, months, days)
+
+		// TODO: support UNTIL
+		if eventStart.After(end) {
+			break
+		}
+	}
 }
