@@ -141,31 +141,25 @@ func showAppointments(startDate, endDate string) {
 }
 
 func main() {
-	//var today string
 	var startDate string
 	var endDate string
 	curTime := time.Now()
-	todayFormat := curTime.Format(IcsFormatWholeDay)
-	intomorrow := curTime.AddDate(0, 0, 1)
-	intomorrowFormat := intomorrow.Format(IcsFormatWholeDay)
-	//in10Days := curTime.AddDate(0, 0, 10)
-	//in10DaysFormat := in10Days.Format(IcsFormatWholeDay)
-	in2Months := curTime.AddDate(0, 2, 0)
-	in2MonthsFormat := in2Months.Format(IcsFormatWholeDay)
 
 	showtoday := flag.Bool("t", false, "Show appointments for today")
-	flag.StringVar(&startDate, "s", todayFormat, "start date")
-	//flag.StringVar(&endDate, "end", in10DaysFormat, "end date")
-	flag.StringVar(&endDate, "e", in2MonthsFormat, "end date")
+	show7days := flag.Bool("7", false, "Show 7 days from now")
+	flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
+	flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
 	flag.Parse()
 
-	if *showtoday == true {
-		endDate = intomorrowFormat
+	if *showtoday {
+		endDate = curTime.AddDate(0, 0, 1).Format(IcsFormatWholeDay) // today till tomorrow
+	}
+	if *show7days {
+		endDate = curTime.AddDate(0, 0, 7).Format(IcsFormatWholeDay) // today till 7 days
 	}
 
 	//startDate = "20210301"
 	//endDate = "20210402"
-	//getConf()
 	showAppointments(startDate, endDate)
 	//	fmt.Printf("current time is :%s\n", curTime)
 }
