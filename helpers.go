@@ -6,34 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"time"
 )
-
-/*
-type config struct {
-	Username string
-	Password string
-	Url      string
-}
-*/
-
-type config struct {
-	Calendars []struct {
-		Username string
-		Password string
-		Url      string
-	}
-}
-
-type props struct {
-	XMLName      xml.Name `xml:"multistatus"`
-	Href         string   `xml:"response>href"`
-	DisplayName  string   `xml:"response>propstat>prop>displayname"`
-	Color        string   `xml:"response>propstat>prop>calendar-color"`
-	CTag         string   `xml:"response>propstat>prop>getctag"`
-	ETag         string   `xml:"response>propstat>prop>getetag"`
-	LastModified string   `xml:"response>propstat>prop>getlastmodified"`
-}
 
 func getConf() *config {
 	configData, err := ioutil.ReadFile(configLocation)
@@ -49,6 +24,38 @@ func getConf() *config {
 	}
 
 	return &conf
+}
+
+func getProp() props {
+	// TODO
+	config := getConf()
+	p := props{}
+	for i := range config.Calendars {
+		//req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
+		req, err := http.NewRequest("PROPFIND", config.Calendars[i].Url, nil)
+		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
+
+		cli := &http.Client{}
+		resp, err := cli.Do(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		xmlContent, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		//fmt.Println(string(xmlContent))
+		err = xml.Unmarshal(xmlContent, &p)
+		if err != nil {
+			panic(err)
+		}
+
+		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
+		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + p.DisplayName)
+		fmt.Println(p.Color)
+	}
+
+	return p
 }
 
 func inTimeSpan(start, end, check time.Time) bool {
