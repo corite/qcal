@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -54,6 +55,7 @@ var configLocation string = (homedir + "/" + ConfigDir + "/config-2.json")
 var cacheLocation string = (homedir + "/" + CacheDir)
 var versionLocation string = (cacheLocation + "/version.json")
 var timezone, _ = time.Now().Zone()
+var xmlContent []byte
 
 var calSkel = `BEGIN:VCALENDAR
 		VERSION:2.0
@@ -68,9 +70,7 @@ var calSkel = `BEGIN:VCALENDAR
 		END:VEVENT
 		END:VCALENDAR`
 
-func fetchCalData(startDate, endDate, singleCal string) Caldata {
-	config := getConf()
-
+func fetchCalData(startDate, endDate, Url, Username, Password string, cald *Caldata, wg *sync.WaitGroup) {
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 			<d:prop>
 				<c:calendar-data />
@@ -84,42 +84,53 @@ func fetchCalData(startDate, endDate, singleCal string) Caldata {
 			</c:filter>
 		    </c:calendar-query>`
 
-	cald := Caldata{}
+	req, err := http.NewRequest("REPORT", Url, strings.NewReader(xmlBody))
+	req.SetBasicAuth(Username, Password)
 
-	//for i := 0; i < len(config.Calendars); i++ {
-	for i := range config.Calendars {
-		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" { // sprintf bc convert int to string
-			req, err := http.NewRequest("REPORT", config.Calendars[i].Url, strings.NewReader(xmlBody))
-			req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
-
-			cli := &http.Client{}
-			resp, err := cli.Do(req)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			xmlContent, _ := ioutil.ReadAll(resp.Body)
-			defer resp.Body.Close()
-
-			//fmt.Println(string(xmlContent))
-			err = xml.Unmarshal(xmlContent, &cald)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+	cli := &http.Client{}
+	resp, err := cli.Do(req)
+	if err != nil {
+		log.Fatal(err)
 	}
 
+	xmlContent, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	//fmt.Println(string(xmlContent))
+	err = xml.Unmarshal(xmlContent, &cald)
+	if err != nil {
+		log.Fatal(err)
+	}
+	wg.Done()
+}
+func fetchCalDataParallel(startDate, endDate, singleCal string) Caldata {
+	config := getConf()
+	cald := Caldata{}
+
+	var wg sync.WaitGroup
+	wg.Add(len(config.Calendars)) // waitgroup length = num calendars
+	for i := range config.Calendars {
+		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" { // sprintf bc convert int to string
+			//fmt.Println("Fetching...")
+			go fetchCalData(startDate, endDate, config.Calendars[i].Url, config.Calendars[i].Username, config.Calendars[i].Password, &cald, &wg)
+		} else {
+			wg.Done()
+		}
+	}
+	wg.Wait()
+	//fmt.Println(&cald.Caldata)
 	return cald
 }
 
 func showAppointments(startDate, endDate, singleCal string) {
 	var elements []Event
 
-	cald := fetchCalData(startDate, endDate, singleCal)
+	cald := fetchCalDataParallel(startDate, endDate, singleCal)
 
 	for i := 0; i < len(cald.Caldata); i++ {
 		eventData := cald.Caldata[i].Data
 		eventHref := cald.Caldata[i].Href
+		//fmt.Println(eventHref)
 
 		eventData, _ = explodeEvent(&eventData) // vevent only
 
