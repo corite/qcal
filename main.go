@@ -105,14 +105,15 @@ func main() {
 	curTime := time.Now()
 
 	flag.StringVar(&singleCal, "c", "all", "Show only single calendar (number)")
-	showtoday := flag.Bool("t", false, "Show appointments for today")
+	showToday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")
+	flag.BoolVar(&showInfo, "i", false, "Show additional info like summary or location for appointments")
 	showCalendars := flag.Bool("C", false, "Show available calendars")
 	flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
 	flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
 	flag.Parse()
 
-	if *showtoday {
+	if *showToday {
 		endDate = curTime.AddDate(0, 0, 1).Format(IcsFormatWholeDay) // today till tomorrow
 	}
 	if *show7days {
@@ -124,7 +125,6 @@ func main() {
 
 		//startDate = "20210301"
 		//endDate = "20210402"
-		//getProp()
 		showAppointments(startDate, endDate, singleCal)
 		//	fmt.Printf("current time is :%s\n", curTime)
 	}

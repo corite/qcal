@@ -80,14 +80,15 @@ func (e Event) fancyOutput() {
 		fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(timeFormat) + `)`)
 	}
 
-	//fmt.Println(e.Href)
-	if e.Description != "" {
-		fmt.Printf(`%15s`, ` `)
-		fmt.Println(`Beschreibung: ` + e.Description)
-	}
-	if e.Location != "" {
-		fmt.Printf(`%15s`, ` `)
-		fmt.Println("Ort: " + e.Location)
+	if showInfo {
+		if e.Description != "" {
+			fmt.Printf(`%15s`, ` `)
+			fmt.Println(`Beschreibung: ` + e.Description)
+		}
+		if e.Location != "" {
+			fmt.Printf(`%15s`, ` `)
+			fmt.Println("Ort: " + e.Location)
+		}
 	}
 	//fmt.Println()
 }
