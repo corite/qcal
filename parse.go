@@ -117,7 +117,7 @@ func parseEventRRule(eventData *string) string {
 	return trimField(result, "RRULE:")
 }
 
-func parseMain(eventData *string, elementsP *[]Event, startDate, endDate, freq, href string) {
+func parseMain(eventData *string, elementsP *[]Event, freq, href string) {
 	eventStart, tzId := parseEventStart(eventData)
 	eventEnd, _ := parseEventEnd(eventData)
 	start, _ := time.Parse(IcsFormatWholeDay, startDate)

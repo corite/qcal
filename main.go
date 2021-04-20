@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func fetchCalData(startDate, endDate, Url, Username, Password string, cald *Caldata, wg *sync.WaitGroup) {
+func fetchCalData(Url, Username, Password string, cald *Caldata, wg *sync.WaitGroup) {
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 			<d:prop>
 				<c:calendar-data />
@@ -49,42 +49,36 @@ func fetchCalData(startDate, endDate, Url, Username, Password string, cald *Cald
 	wg.Done()
 }
 
-// use waitgroups to fetch calendars in parallel
-func fetchCalDataParallel(startDate, endDate, singleCal string) Caldata {
+func showAppointments(singleCal string) {
 	config := getConf()
 	cald := Caldata{}
+	var elements []Event
 
+	// use waitgroups to fetch calendars in parallel
 	var wg sync.WaitGroup
 	wg.Add(len(config.Calendars)) // waitgroup length = num calendars
 	for i := range config.Calendars {
 		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" { // sprintf bc convert int to string
 			//fmt.Println("Fetching...")
-			go fetchCalData(startDate, endDate, config.Calendars[i].Url, config.Calendars[i].Username, config.Calendars[i].Password, &cald, &wg)
+			go fetchCalData(config.Calendars[i].Url, config.Calendars[i].Username, config.Calendars[i].Password, &cald, &wg)
 		} else {
 			wg.Done()
 		}
 	}
 	wg.Wait()
-	//fmt.Println(&cald.Caldata)
-	return cald
-}
 
-func showAppointments(startDate, endDate, singleCal string) {
-	var elements []Event
-
-	cald := fetchCalDataParallel(startDate, endDate, singleCal)
-
-	for i := 0; i < len(cald.Caldata); i++ {
+	//for i := 0; i < len(cald.Caldata); i++ {
+	for i := range cald.Caldata {
 		eventData := cald.Caldata[i].Data
 		eventHref := cald.Caldata[i].Href
-		//fmt.Println(eventHref)
+		// fmt.Println(eventHref)
 
 		eventData, _ = explodeEvent(&eventData) // vevent only
 
 		reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
 		freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
 
-		parseMain(&eventData, &elements, startDate, endDate, freq, eventHref)
+		parseMain(&eventData, &elements, freq, eventHref)
 	}
 
 	// time.Time sort by start time for events
@@ -99,18 +93,16 @@ func showAppointments(startDate, endDate, singleCal string) {
 }
 
 func main() {
-	var startDate string
-	var endDate string
 	var singleCal string
 	curTime := time.Now()
 
 	flag.StringVar(&singleCal, "c", "all", "Show only single calendar (number)")
 	showToday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")
-	flag.BoolVar(&showInfo, "i", false, "Show additional info like summary or location for appointments")
 	showCalendars := flag.Bool("C", false, "Show available calendars")
 	flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
 	flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
+	flag.BoolVar(&showInfo, "i", false, "Show additional info like summary or location for appointments")
 	flag.Parse()
 
 	if *showToday {
@@ -119,13 +111,13 @@ func main() {
 	if *show7days {
 		endDate = curTime.AddDate(0, 0, 7).Format(IcsFormatWholeDay) // today till 7 days
 	}
+
 	if *showCalendars {
 		getProp()
 	} else {
-
 		//startDate = "20210301"
 		//endDate = "20210402"
-		showAppointments(startDate, endDate, singleCal)
+		showAppointments(singleCal)
 		//	fmt.Printf("current time is :%s\n", curTime)
 	}
 }

@@ -14,6 +14,8 @@ var versionLocation string = (cacheLocation + "/version.json")
 var timezone, _ = time.Now().Zone()
 var xmlContent []byte
 var showInfo bool
+var startDate string
+var endDate string
 
 const (
 	ConfigDir      = ".config/qcal"
