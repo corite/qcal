@@ -14,8 +14,10 @@ var versionLocation string = (cacheLocation + "/version.json")
 var timezone, _ = time.Now().Zone()
 var xmlContent []byte
 var showInfo bool
+var showFilename bool
 var startDate string
 var endDate string
+var summary string
 
 const (
 	ConfigDir      = ".config/qcal"
@@ -36,6 +38,7 @@ const (
 	ColDefault          = "\033[0m"
 	ColGreen            = "\033[0;32m"
 	ColBlue             = "\033[1;34m"
+	ColYellow           = "\033[1;33m"
 )
 
 /*
@@ -52,6 +55,7 @@ type config struct {
 		Password string
 		Url      string
 	}
+	Timezone string
 }
 
 type props struct {

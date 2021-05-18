@@ -1,12 +1,16 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -66,7 +70,7 @@ func inTimeSpan(start, end, check time.Time) bool {
 func (e Event) fancyOutput() {
 	// whole day or greater
 	if e.Start.Format(timeFormat) == e.End.Format(timeFormat) {
-		fmt.Print(ColGreen + e.Start.Format(dateFormat) + ColDefault + ` `)
+		fmt.Print(ColYellow + e.Start.Format(dateFormat) + ColDefault + ` `)
 		fmt.Printf(`%6s`, ` `)
 		//fmt.Println(e)
 		//if e.Start.Format(dateFormat) == e.End.Format(dateFormat) {
@@ -76,7 +80,7 @@ func (e Event) fancyOutput() {
 			fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(dateFormat) + `)`)
 		}
 	} else {
-		fmt.Print(ColGreen + e.Start.Format(RFC822) + ColDefault + ` `)
+		fmt.Print(ColYellow + e.Start.Format(RFC822) + ColDefault + ` `)
 		fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(timeFormat) + `)`)
 	}
 
@@ -90,5 +94,70 @@ func (e Event) fancyOutput() {
 			fmt.Println("Ort: " + e.Location)
 		}
 	}
+	if showFilename {
+		if e.Href != "" {
+			fmt.Println(path.Base(e.Href))
+		}
+	}
 	//fmt.Println()
+}
+
+func genUUID() (uuid string) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+	uuid = fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+
+	return
+}
+
+func strToInt(str string) (int, error) {
+	nonFractionalPart := strings.Split(str, ".")
+	return strconv.Atoi(nonFractionalPart[0])
+}
+
+func deleteEvent(calNumber string, eventFilename string) (status string) {
+	config := getConf()
+
+	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
+	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
+
+	req, _ := http.NewRequest("DELETE", config.Calendars[calNo].Url+eventFilename, nil)
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+
+	cli := &http.Client{}
+	resp, err := cli.Do(req)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(resp.Status)
+
+	return
+}
+
+func dumpEvent(calNumber string, eventFilename string) (status string) {
+	config := getConf()
+
+	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
+	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
+
+	req, _ := http.NewRequest("GET", config.Calendars[calNo].Url+eventFilename, nil)
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+
+	cli := &http.Client{}
+	resp, err := cli.Do(req)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(resp.Status)
+	xmlContent, _ := ioutil.ReadAll(resp.Body)
+
+	fmt.Println(string(xmlContent))
+
+	return
 }

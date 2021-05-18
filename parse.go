@@ -56,6 +56,7 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 
 	resultWholeDay := reWholeDay.FindString(eventData)
 	var t time.Time
+	var datetime time.Time
 	var tzID string
 
 	if resultWholeDay != "" {
@@ -77,7 +78,17 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 
 		}
 		//fmt.Println(dt)
-		t, _ = time.Parse(IcsFormat, dt)
+		location, _ := time.LoadLocation("Europe/Berlin")
+		datetime, _ = time.Parse(IcsFormat, dt)
+
+		// TODO: Solution for appointments with timezones. This here is bad.
+		if tzID != "" {
+			//loc, _ := time.LoadLocation(tzID)
+			//datetime = datetime.UTC().In(loc)
+			t = datetime
+		} else {
+			t = datetime.In(location)
+		}
 	}
 
 	return t, tzID
@@ -115,6 +126,22 @@ func parseEventRRule(eventData *string) string {
 	re, _ := regexp.Compile(`RRULE:.*?\n`)
 	result := re.FindString(*eventData)
 	return trimField(result, "RRULE:")
+}
+
+func parseICalTimezone(eventData *string) time.Location {
+	re, _ := regexp.Compile(`X-WR-TIMEZONE:.*?\n`)
+	result := re.FindString(*eventData)
+
+	// parse the timezone result to time.Location
+	timezone := trimField(result, "X-WR-TIMEZONE:")
+	// create location instance
+	loc, err := time.LoadLocation(timezone)
+
+	// if fails with the timezone => go Local
+	if err != nil {
+		loc, _ = time.LoadLocation("UTC")
+	}
+	return *loc
 }
 
 func parseMain(eventData *string, elementsP *[]Event, freq, href string) {
