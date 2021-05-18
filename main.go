@@ -24,14 +24,18 @@ func fetchCalData(Url, Username, Password string, cald *Caldata, wg *sync.WaitGr
 			<c:filter>
 				<c:comp-filter name="VCALENDAR"> 
 					<c:comp-filter name="VEVENT">
-						<c:time-range start="` + startDate + `T0000Z" end="` + endDate + `T2359Z"/>
+						<c:time-range start="` + startDate + `T000000Z" end="` + endDate + `T235959Z"/>
 					</c:comp-filter>
 				</c:comp-filter>
 			</c:filter>
 		    </c:calendar-query>`
 
+	//fmt.Println(xmlBody)
 	req, err := http.NewRequest("REPORT", Url, strings.NewReader(xmlBody))
 	req.SetBasicAuth(Username, Password)
+	req.Header.Add("Content-Type", "application/xml; charset=utf-8")
+	req.Header.Add("Depth", "1") // needed for SabreDAV
+	req.Header.Add("Prefer", "return-minimal")
 
 	cli := &http.Client{}
 	resp, err := cli.Do(req)
