@@ -54,7 +54,7 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 	//re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))?(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
 	// correct regex: .+:(.+)$
 	//re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))?(;VALUE=DATE-TIME)?(.+:(.*?))\n`, fieldName))
-	re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=((.+?).+))?:(.+?)\n`, fieldName))
+	re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.+))?(;VALUE=DATE-TIME)?:(.+?)\n`, fieldName))
 	//re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))
 
 	resultWholeDay := reWholeDay.FindString(eventData)
