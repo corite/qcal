@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -139,7 +140,7 @@ func deleteEvent(calNumber string, eventFilename string) (status string) {
 	return
 }
 
-func dumpEvent(calNumber string, eventFilename string) (status string) {
+func dumpEvent(calNumber string, eventFilename string, toFile bool) (status string) {
 	config := getConf()
 
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
@@ -154,10 +155,45 @@ func dumpEvent(calNumber string, eventFilename string) (status string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(resp.Status)
+	//fmt.Println(resp.Status)
 	xmlContent, _ := ioutil.ReadAll(resp.Body)
 
-	fmt.Println(string(xmlContent))
+	if toFile {
+		// create cache dir if not exists
+		os.MkdirAll(cacheLocation, os.ModePerm)
+		err := ioutil.WriteFile(cacheLocation+"/"+eventFilename, xmlContent, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return eventFilename + " written"
+	} else {
+		fmt.Println(string(xmlContent))
+		return
+	}
+}
+
+func uploadICS(calNumber string, eventFilename string) (status string) {
+	config := getConf()
+
+	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
+	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
+
+	eventICS, err := ioutil.ReadFile(cacheLocation + "/" + eventFilename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req, _ := http.NewRequest("PUT", config.Calendars[calNo].Url+eventFilename, strings.NewReader(string(eventICS)))
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+	req.Header.Add("Content-Type", "text/calendar; charset=utf-8")
+
+	cli := &http.Client{}
+	resp, err := cli.Do(req)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(resp.Status)
 
 	return
 }

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os/exec"
 	"regexp"
 	"sort"
 	"strconv"
@@ -164,6 +165,7 @@ END:VCALENDAR`
 
 func main() {
 	curTime := time.Now()
+	toFile := false
 
 	flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
 	flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
@@ -175,6 +177,7 @@ func main() {
 	showCalendars := flag.Bool("C", false, "Show available calendars")
 	appointmentFile := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with -c")
 	appointmentDump := flag.String("dump", "", "Dump raw  appointment data. Get filename with \"-f\" and use with -c")
+	appointmentEdit := flag.String("edit", "", "Edit + upload appointment data. Get filename with \"-f\" and use with -c")
 	appointmentData := flag.String("n", "20210425 0800 0900 bla blubb foo bar", "Add a new appointment. Syntax: yyyymmdd hhmm hhmm subject")
 	flag.Parse()
 	flagset := make(map[string]bool) // map for flag.Visit. get bools to determine set flags
@@ -196,7 +199,24 @@ func main() {
 	} else if flagset["d"] {
 		deleteEvent(*calNumber, *appointmentFile)
 	} else if flagset["dump"] {
-		dumpEvent(*calNumber, *appointmentDump)
+		dumpEvent(*calNumber, *appointmentDump, toFile)
+	} else if flagset["edit"] {
+		toFile = true
+		dumpEvent(*calNumber, *appointmentEdit, toFile)
+		//cmd := editor + " " + cacheLocation + "/" + *appointmentEdit
+		//fmt.Println(cmd)
+		fmt.Println(appointmentEdit)
+		cmnd := exec.Command("st", "-e", editor, cacheLocation+"/"+*appointmentEdit)
+		cmnd.Run()
+		//cmnd := exec.Command("/bin/sh -c vim")
+
+		//fmt.Println(string(cmnd))
+		/*cmdOutput, err := exec.Command(cmd).Output()
+		if err == nil {
+			fmt.Println("error")
+			fmt.Println(cmdOutput)
+		}*/
+		uploadICS(*calNumber, *appointmentEdit)
 	} else {
 		//startDate = "20210301"
 		//endDate = "20210402"
