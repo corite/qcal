@@ -56,12 +56,13 @@ func getProp() props {
 		}
 
 		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
-		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + p.DisplayName)
-		if p.Color != "" {
+		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
+			` ` + p.DisplayName + ` (` + config.Calendars[i].Url + `)`)
+		/*if p.Color != "" {
 			fmt.Println(p.Color)
 		} else {
 			fmt.Println(config.DefaultCalColor)
-		}
+		}*/
 	}
 
 	return p
