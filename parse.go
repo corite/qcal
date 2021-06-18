@@ -27,6 +27,7 @@ const (
 
 type Event struct {
 	Href        string
+	Color       string
 	Start       time.Time
 	End         time.Time
 	TZID        string
@@ -146,7 +147,7 @@ func parseICalTimezone(eventData *string) time.Location {
 	return *loc
 }
 
-func parseMain(eventData *string, elementsP *[]Event, freq, href string) {
+func parseMain(eventData *string, elementsP *[]Event, freq, href, color string) {
 	eventStart, tzId := parseEventStart(eventData)
 	eventEnd, _ := parseEventEnd(eventData)
 	start, _ := time.Parse(IcsFormatWholeDay, startDate)
@@ -180,6 +181,7 @@ func parseMain(eventData *string, elementsP *[]Event, freq, href string) {
 		if inTimeSpan(start, end, eventStart) {
 			data := Event{
 				Href:        href,
+				Color:       color,
 				Start:       eventStart,
 				End:         eventEnd,
 				TZID:        tzId,

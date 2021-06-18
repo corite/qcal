@@ -57,7 +57,11 @@ func getProp() props {
 
 		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
 		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + p.DisplayName)
-		fmt.Println(p.Color)
+		if p.Color != "" {
+			fmt.Println(p.Color)
+		} else {
+			fmt.Println(config.DefaultCalColor)
+		}
 	}
 
 	return p
@@ -71,7 +75,7 @@ func inTimeSpan(start, end, check time.Time) bool {
 func (e Event) fancyOutput() {
 	// whole day or greater
 	if e.Start.Format(timeFormat) == e.End.Format(timeFormat) {
-		fmt.Print(ColYellow + e.Start.Format(dateFormat) + ColDefault + ` `)
+		fmt.Print(e.Color + colorBlock + ColDefault + ` ` + e.Start.Format(dateFormat) + ` `)
 		fmt.Printf(`%6s`, ` `)
 		//fmt.Println(e)
 		//if e.Start.Format(dateFormat) == e.End.Format(dateFormat) {
@@ -81,7 +85,7 @@ func (e Event) fancyOutput() {
 			fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(dateFormat) + `)`)
 		}
 	} else {
-		fmt.Print(ColYellow + e.Start.Format(RFC822) + ColDefault + ` `)
+		fmt.Print(e.Color + colorBlock + ColDefault + ` ` + e.Start.Format(RFC822) + ` `)
 		fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(timeFormat) + `)`)
 	}
 

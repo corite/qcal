@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func fetchCalData(Url, Username, Password string, cald *Caldata, wg *sync.WaitGroup) {
+func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync.WaitGroup) {
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 			<d:prop>
 				<c:calendar-data />
@@ -52,42 +52,46 @@ func fetchCalData(Url, Username, Password string, cald *Caldata, wg *sync.WaitGr
 	if err != nil {
 		log.Fatal(err)
 	}
-	wg.Done()
-}
-
-func showAppointments(singleCal string) {
-	config := getConf()
-	cald := Caldata{}
-	var elements []Event
-
-	// use waitgroups to fetch calendars in parallel
-	var wg sync.WaitGroup
-	wg.Add(len(config.Calendars)) // waitgroup length = num calendars
-	for i := range config.Calendars {
-		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" { // sprintf bc convert int to string
-			//fmt.Println("Fetching...")
-			go fetchCalData(config.Calendars[i].Url, config.Calendars[i].Username, config.Calendars[i].Password, &cald, &wg)
-		} else {
-			wg.Done()
-		}
-	}
-	wg.Wait()
+	//fmt.Println(Color)
 
 	//for i := 0; i < len(cald.Caldata); i++ {
 	for i := range cald.Caldata {
 		eventData := cald.Caldata[i].Data
 		eventHref := cald.Caldata[i].Href
-		// fmt.Println(eventHref)
+		eventColor := Color
+		//fmt.Println(eventData)
+		//fmt.Println(i)
 
 		eventData, _ = explodeEvent(&eventData) // vevent only
 
 		reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
 		freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
 
-		parseMain(&eventData, &elements, freq, eventHref)
+		parseMain(&eventData, &elements, freq, eventHref, eventColor)
 	}
+	wg.Done()
+
+}
+
+func showAppointments(singleCal string) {
+	config := getConf()
+
+	// use waitgroups to fetch calendars in parallel
+	var wg sync.WaitGroup
+	wg.Add(len(config.Calendars)) // waitgroup length = num calendars
+	for i := range config.Calendars {
+		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" { // sprintf because convert int to string
+			//fmt.Println("Fetching...")
+			var cald = Caldata{}
+			go fetchCalData(config.Calendars[i].Url, config.Calendars[i].Username, config.Calendars[i].Password, Colors[i], &cald, &wg)
+		} else {
+			wg.Done()
+		}
+	}
+	wg.Wait()
 
 	// time.Time sort by start time for events
+	//fmt.Println(len(elements))
 	sort.Slice(elements, func(i, j int) bool {
 		return elements[i].Start.Before(elements[j].Start)
 	})
