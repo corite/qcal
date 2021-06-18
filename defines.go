@@ -9,7 +9,7 @@ import (
 var err string
 var homedir string = os.Getenv("HOME")
 var editor string = os.Getenv("EDITOR")
-var configLocation string = (homedir + "/" + ConfigDir + "/config-2.json")
+var configLocation string = (homedir + "/" + ConfigDir + "/config.json")
 var cacheLocation string = (homedir + "/" + CacheDir)
 var versionLocation string = (cacheLocation + "/version.json")
 var timezone, _ = time.Now().Zone()

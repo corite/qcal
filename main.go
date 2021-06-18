@@ -53,8 +53,6 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 		log.Fatal(err)
 	}
 	//fmt.Println(Color)
-
-	//for i := 0; i < len(cald.Caldata); i++ {
 	for i := range cald.Caldata {
 		eventData := cald.Caldata[i].Data
 		eventHref := cald.Caldata[i].Href
@@ -69,12 +67,14 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 
 		parseMain(&eventData, &elements, freq, eventHref, eventColor)
 	}
+
 	wg.Done()
 
 }
 
 func showAppointments(singleCal string) {
 	config := getConf()
+	cald := Caldata{}
 
 	// use waitgroups to fetch calendars in parallel
 	var wg sync.WaitGroup
@@ -89,6 +89,21 @@ func showAppointments(singleCal string) {
 		}
 	}
 	wg.Wait()
+	//for i := 0; i < len(cald.Caldata); i++ {
+	for i := range cald.Caldata {
+		eventData := cald.Caldata[i].Data
+		eventHref := cald.Caldata[i].Href
+		eventColor := Colors[0]
+		//fmt.Println(eventData)
+		//fmt.Println(i)
+
+		eventData, _ = explodeEvent(&eventData) // vevent only
+
+		reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
+		freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
+
+		parseMain(&eventData, &elements, freq, eventHref, eventColor)
+	}
 
 	// time.Time sort by start time for events
 	//fmt.Println(len(elements))
