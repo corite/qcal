@@ -193,7 +193,7 @@ func main() {
 	calNumber := flag.String("c", "all", "Show only single calendar (number)")
 	showToday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")
-	showCalendars := flag.Bool("C", false, "Show available calendars")
+	showCalendars := flag.Bool("l", false, "List configured calendars with numbers (for -c)")
 	appointmentFile := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with -c")
 	appointmentDump := flag.String("dump", "", "Dump raw  appointment data. Get filename with \"-f\" and use with -c")
 	appointmentEdit := flag.String("edit", "", "Edit + upload appointment data. Get filename with \"-f\" and use with -c")
@@ -211,7 +211,7 @@ func main() {
 	if *showCalendars {
 	}
 
-	if flagset["C"] {
+	if flagset["l"] {
 		getProp()
 	} else if flagset["n"] {
 		createAppointment(*calNumber, *appointmentData)

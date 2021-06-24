@@ -1,6 +1,5 @@
 # TODO
 
-* colors for different calendars
 * correct timezone parsing
 * support UNTIL in appointments
 * support editing
