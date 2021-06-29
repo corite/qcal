@@ -118,6 +118,8 @@ func parseEventDescription(eventData *string) string {
 	//better = strings.Replace(better, "\\", "", -1)
 	resultA := re.FindAllString(*eventData, -1)
 	result := strings.Join(resultA, ", ")
+	result = strings.Replace(result, "\n", "", -1)
+	result = strings.Replace(result, "\\N", "", -1)
 	//better := strings.Replace(re.FindString(result), "\n ", "", -1)
 	//better = strings.Replace(better, "\\n", " ", -1)
 	//better = strings.Replace(better, "\\", "", -1)
@@ -183,6 +185,7 @@ func parseMain(eventData *string, elementsP *[]Event, freq, href, color string) 
 		years = 1
 		break
 	}
+	//fmt.Println(eventStart)
 
 	for {
 		if inTimeSpan(start, end, eventStart) {

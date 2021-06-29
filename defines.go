@@ -16,6 +16,7 @@ var timezone, _ = time.Now().Zone()
 var xmlContent []byte
 var showInfo bool
 var showFilename bool
+var displayFlag bool
 var startDate string
 var endDate string
 var summary string

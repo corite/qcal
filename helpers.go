@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/rand"
 	"encoding/json"
 	"encoding/xml"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -107,6 +109,23 @@ func (e Event) fancyOutput() {
 	}
 	//fmt.Println()
 }
+func (e Event) icsOutput() {
+	// whole day or greater
+	fmt.Println(`Appointment
+===========`)
+	//fmt.Printf(`Summary:%6s`, ` `)
+	//fmt.Print(e.Summary)
+	fmt.Printf(`Summary:%6s`+e.Summary, ` `)
+	fmt.Println(``)
+	fmt.Printf(`Start:%8s`+e.Start.Format(RFC822), ` `)
+	fmt.Println(``)
+	fmt.Printf(`End:%10s`+e.End.Format(RFC822), ` `)
+	fmt.Println(``)
+	fmt.Printf(`Description:%2s`+e.Description, ` `)
+	fmt.Println(``)
+	fmt.Printf(`Location:%5s`+e.Location, ` `)
+	fmt.Println(``)
+}
 
 func genUUID() (uuid string) {
 	b := make([]byte, 16)
@@ -201,4 +220,28 @@ func uploadICS(calNumber string, eventFilename string) (status string) {
 	fmt.Println(resp.Status)
 
 	return
+}
+
+func displayICS() {
+	scanner := bufio.NewScanner(os.Stdin)
+
+	var icsData string
+
+	for scanner.Scan() {
+		icsData += scanner.Text() + "\n"
+	}
+
+	eventData, _ := explodeEvent(&icsData)
+	reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
+	freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
+
+	parseMain(&eventData, &elements, freq, "none", "none")
+	for _, e := range elements {
+		e.icsOutput()
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println(err)
+	}
+
 }

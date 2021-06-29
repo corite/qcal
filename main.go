@@ -190,6 +190,7 @@ func main() {
 	flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
 	flag.BoolVar(&showInfo, "i", false, "Show additional info like summary or location for appointments")
 	flag.BoolVar(&showFilename, "f", false, "Show appointment filename for editing or deletion")
+	flag.BoolVar(&displayFlag, "p", false, "Print ICS file piped to qcal (for CLI mail tools like mutt)")
 	calNumber := flag.String("c", "all", "Show only single calendar (number)")
 	showToday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")
@@ -219,6 +220,8 @@ func main() {
 		deleteEvent(*calNumber, *appointmentFile)
 	} else if flagset["dump"] {
 		dumpEvent(*calNumber, *appointmentDump, toFile)
+	} else if flagset["p"] {
+		displayICS()
 	} else if flagset["edit"] {
 		toFile = true
 		dumpEvent(*calNumber, *appointmentEdit, toFile)
