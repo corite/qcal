@@ -113,19 +113,18 @@ func parseEventSummary(eventData *string) string {
 
 func parseEventDescription(eventData *string) string {
 	re, _ := regexp.Compile(`DESCRIPTION:.*?\n(?:\s+.*?\n)*`)
-	//better := strings.Replace(re.FindString(*eventData), "\n ", "", -1)
-	//better = strings.Replace(better, "\\n", " ", -1)
-	//better = strings.Replace(better, "\\", "", -1)
+
 	resultA := re.FindAllString(*eventData, -1)
 	result := strings.Join(resultA, ", ")
-	result = strings.Replace(result, "\n", "", -1)
-	result = strings.Replace(result, "\\N", "", -1)
+	//result = strings.Replace(result, "\n", "", -1)
+	result = strings.Replace(result, "\\N", "\n", -1)
 	//better := strings.Replace(re.FindString(result), "\n ", "", -1)
 	//better = strings.Replace(better, "\\n", " ", -1)
 	//better = strings.Replace(better, "\\", "", -1)
 
 	//return trimField(better, "DESCRIPTION:")
-	return trimField(result, "DESCRIPTION:")
+	//return trimField(result, "DESCRIPTION:")
+	return trimField(strings.Replace(result, "\r\n ", "", -1), "DESCRIPTION:")
 }
 
 func parseEventLocation(eventData *string) string {

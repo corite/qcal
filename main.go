@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"regexp"
 	"sort"
@@ -188,7 +189,7 @@ func main() {
 
 	flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
 	flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
-	flag.BoolVar(&showInfo, "i", false, "Show additional info like summary or location for appointments")
+	flag.BoolVar(&showInfo, "i", false, "Show additional info like description and location for appointments")
 	flag.BoolVar(&showFilename, "f", false, "Show appointment filename for editing or deletion")
 	flag.BoolVar(&displayFlag, "p", false, "Print ICS file piped to qcal (for CLI mail tools like mutt)")
 	calNumber := flag.String("c", "all", "Show only single calendar (number)")
@@ -225,19 +226,15 @@ func main() {
 	} else if flagset["edit"] {
 		toFile = true
 		dumpEvent(*calNumber, *appointmentEdit, toFile)
-		//cmd := editor + " " + cacheLocation + "/" + *appointmentEdit
-		//fmt.Println(cmd)
-		fmt.Println(appointmentEdit)
-		cmnd := exec.Command("st", "-e", editor, cacheLocation+"/"+*appointmentEdit)
-		cmnd.Run()
-		//cmnd := exec.Command("/bin/sh -c vim")
+		//fmt.Println(appointmentEdit)
+		filepath := cacheLocation + "/" + *appointmentEdit
 
-		//fmt.Println(string(cmnd))
-		/*cmdOutput, err := exec.Command(cmd).Output()
-		if err == nil {
-			fmt.Println("error")
-			fmt.Println(cmdOutput)
-		}*/
+		shell := exec.Command(editor, filepath)
+		shell.Stdout = os.Stdout
+		shell.Stdin = os.Stdin
+		shell.Stderr = os.Stderr
+		shell.Run()
+
 		uploadICS(*calNumber, *appointmentEdit)
 	} else {
 		//startDate = "20210301"
