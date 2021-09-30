@@ -157,7 +157,7 @@ func parseICalTimezone(eventData *string) time.Location {
 
 func parseMain(eventData *string, elementsP *[]Event, freq, href, color string) {
 	eventStart, tzId := parseEventStart(eventData)
-	eventEnd, _ := parseEventEnd(eventData)
+	eventEnd, tzId := parseEventEnd(eventData)
 	start, _ := time.Parse(IcsFormatWholeDay, startDate)
 	end, _ := time.Parse(IcsFormatWholeDay, endDate)
 

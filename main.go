@@ -134,18 +134,38 @@ func createAppointment(calNumber string, appointmentData string) {
 	}
 	newElem := genUUID() + `.ics`
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
-	dtStart, _ := time.Parse(IcsFormat, startDate+`T`+startTime+`00Z`)
-	dtEnd, _ := time.Parse(IcsFormat, endDate+`T`+endTime+`00Z`)
+	//tzName, _ := time.Now().Zone()
+	//fmt.Printf("name: [%v]\toffset: [%v]\n", tzName, tzOffset)
+	tzName, e := time.LoadLocation(config.Timezone)
+	checkError(e)
+
+	//	dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, startDate, startTime)
+	//dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", "CET", startDate, startTime)
+	//dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, startDate, startTime)
+	dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, startDate, startTime)
+	dtEndString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, endDate, endTime)
+	timezoneString := fmt.Sprintf("%v", tzName)
+	//dtStart, _ := time.Parse(IcsFormatTZ, "%vT%v00Z%v", startDate, startTime, tzOffset)
+	//dtStart, _ := time.Parse(IcsFormatTZ, dtStartString)
+	//dtStart, _ := time.Parse(IcsFormatTZ, dtStartString)
+	//dtEnd, _ := time.Parse(IcsFormatTZ, dtEndString)
+	//fmt.Println(dtStart.In(tzName))
+	//fmt.Println(dtEnd)
+	//fmt.Println(`DTSTART;TZID=Europe/Berlin:` + dtStart.UTC().Format(IcsFormat) + ``)
+	//fmt.Println(`DTSTART;TZID=Europe/Berlin:` + dtEnd.UTC().Format(IcsFormat) + ``)
 	//DTSTART;TZID=` + timezone + `:` + startDate + `T` + startTime + `00Z
 	//DTSTART;TZID=` + timezone + `:` + startDate + `T` + startTime + `00
 	//DTEND;TZID=` + timezone + `:` + endDate + `T` + endTime + `00
+
+	//DTSTART;TZID=Europe/Berlin:` + dtStart.UTC().Format(IcsFormat) + `
+	//DTEND;TZID=Europe/Berlin:` + dtEnd.UTC().Format(IcsFormat) + `
 
 	var calSkel = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//qcal
 METHOD:PUBLISH
 BEGIN:VTIMEZONE
-TZID:Europe/Berlin
+TZID:` + timezoneString + `
 BEGIN:STANDARD
 DTSTART:16011028T030000
 RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
@@ -161,13 +181,14 @@ END:DAYLIGHT
 END:VTIMEZONE
 BEGIN:VEVENT
 UID:` + curTime.UTC().Format(IcsFormat) + `-` + newElem + `
-DTSTART;TZID=Europe/Berlin:` + dtStart.UTC().Format(IcsFormat) + ` 
-DTEND;TZID=Europe/Berlin:` + dtEnd.UTC().Format(IcsFormat) + `
+DTSTART;` + dtStartString + ` 
+DTEND;` + dtEndString + `
 DTSTAMP:` + curTime.UTC().Format(IcsFormat) + `
 SUMMARY:` + summary + `
 END:VEVENT
 END:VCALENDAR`
 	//fmt.Println(calSkel)
+	//os.Exit(3)
 
 	req, _ := http.NewRequest("PUT", config.Calendars[calNo].Url+newElem, strings.NewReader(calSkel))
 	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)

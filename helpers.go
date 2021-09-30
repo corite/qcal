@@ -70,6 +70,12 @@ func getProp() props {
 	return p
 }
 
+func checkError(e error) {
+	if e != nil {
+		fmt.Println(e)
+	}
+}
+
 func inTimeSpan(start, end, check time.Time) bool {
 	return check.After(start) && check.Before(end)
 }
