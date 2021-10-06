@@ -158,8 +158,9 @@ func parseICalTimezone(eventData *string) time.Location {
 func parseMain(eventData *string, elementsP *[]Event, freq, href, color string) {
 	eventStart, tzId := parseEventStart(eventData)
 	eventEnd, tzId := parseEventEnd(eventData)
-	start, _ := time.Parse(IcsFormatWholeDay, startDate)
-	end, _ := time.Parse(IcsFormatWholeDay, endDate)
+	start, _ := time.Parse(IcsFormat, startDate)
+	end, _ := time.Parse(IcsFormat, endDate)
+	//fmt.Println(start)
 
 	var years, days, months int
 	switch freq {

@@ -19,20 +19,33 @@ import (
 )
 
 func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync.WaitGroup) {
-	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-			<d:prop>
-				<c:calendar-data />
-			</d:prop>
-			<c:filter>
-				<c:comp-filter name="VCALENDAR"> 
-					<c:comp-filter name="VEVENT">
-						<c:time-range start="` + startDate + `T000000Z" end="` + endDate + `T235959Z"/>
-					</c:comp-filter>
-				</c:comp-filter>
-			</c:filter>
-		    </c:calendar-query>`
 
-	//fmt.Println(xmlBody)
+	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+				<d:prop>
+					<c:calendar-data />
+				</d:prop>
+				<c:filter>
+					<c:comp-filter name="VCALENDAR">
+						<c:comp-filter name="VEVENT">
+							<c:time-range start="` + startDate + `" end="` + endDate + `"/> </c:comp-filter>
+					</c:comp-filter>
+				</c:filter>
+			    </c:calendar-query>`
+
+	//	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+	//				<d:prop>
+	//					<c:calendar-data />
+	//				</d:prop>
+	//				<c:filter>
+	//					<c:comp-filter name="VCALENDAR">
+	//						<c:comp-filter name="VEVENT">
+	//							<c:time-range start="` + startDate + `T000000Z" end="` + endDate + `T235959Z"/>
+	//						</c:comp-filter>
+	//					</c:comp-filter>
+	//				</c:filter>
+	//			    </c:calendar-query>`
+
+	// 	fmt.Println(xmlBody)
 	req, err := http.NewRequest("REPORT", Url, strings.NewReader(xmlBody))
 	req.SetBasicAuth(Username, Password)
 	req.Header.Add("Content-Type", "application/xml; charset=utf-8")
@@ -205,11 +218,17 @@ END:VCALENDAR`
 }
 
 func main() {
-	curTime := time.Now()
+	curTime := time.Now().UTC()
+	curTimeDay := curTime.Truncate(24 * time.Hour).Add(-1) // remove time, substract 1 msec for whole day appointments
+	//fmt.Println(curTimeDay)
 	toFile := false
 
-	flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
-	flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
+	//fmt.Println(curTime.Format(IcsFormat))
+	// 	fmt.Println(curTime.AddDate(0, 2, 0).Format(IcsFormat))
+	//flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
+	//flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
+	flag.StringVar(&startDate, "s", curTimeDay.Format(IcsFormat), "start date")              // default today
+	flag.StringVar(&endDate, "e", curTimeDay.AddDate(0, 2, 0).Format(IcsFormat), "end date") // default 2 month
 	flag.BoolVar(&showInfo, "i", false, "Show additional info like description and location for appointments")
 	flag.BoolVar(&showFilename, "f", false, "Show appointment filename for editing or deletion")
 	flag.BoolVar(&displayFlag, "p", false, "Print ICS file piped to qcal (for CLI mail tools like mutt)")
@@ -226,10 +245,10 @@ func main() {
 	flag.Visit(func(f *flag.Flag) { flagset[f.Name] = true })
 
 	if *showToday {
-		endDate = curTime.AddDate(0, 0, 1).Format(IcsFormatWholeDay) // today till tomorrow
+		endDate = curTimeDay.AddDate(0, 0, 1).Format(IcsFormat) // today till tomorrow
 	}
 	if *show7days {
-		endDate = curTime.AddDate(0, 0, 7).Format(IcsFormatWholeDay) // today till 7 days
+		endDate = curTimeDay.AddDate(0, 0, 7).Format(IcsFormat) // today till 7 days
 	}
 	if *showCalendars {
 	}
