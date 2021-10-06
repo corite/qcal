@@ -32,20 +32,7 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 				</c:filter>
 			    </c:calendar-query>`
 
-	//	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-	//				<d:prop>
-	//					<c:calendar-data />
-	//				</d:prop>
-	//				<c:filter>
-	//					<c:comp-filter name="VCALENDAR">
-	//						<c:comp-filter name="VEVENT">
-	//							<c:time-range start="` + startDate + `T000000Z" end="` + endDate + `T235959Z"/>
-	//						</c:comp-filter>
-	//					</c:comp-filter>
-	//				</c:filter>
-	//			    </c:calendar-query>`
-
-	// 	fmt.Println(xmlBody)
+	//fmt.Println(xmlBody)
 	req, err := http.NewRequest("REPORT", Url, strings.NewReader(xmlBody))
 	req.SetBasicAuth(Username, Password)
 	req.Header.Add("Content-Type", "application/xml; charset=utf-8")
@@ -218,9 +205,9 @@ END:VCALENDAR`
 }
 
 func main() {
-	curTime := time.Now().UTC()
-	curTimeDay := curTime.Truncate(24 * time.Hour).Add(-1) // remove time, substract 1 msec for whole day appointments
-	//fmt.Println(curTimeDay)
+	curTime := time.Now()
+	curTimeDay := curTime.UTC().Truncate(24 * time.Hour).Add(-1) // remove time, substract 1 msec for whole day appointments
+	//fmt.Println(curTime)
 	toFile := false
 
 	//fmt.Println(curTime.Format(IcsFormat))
@@ -235,6 +222,7 @@ func main() {
 	calNumber := flag.String("c", "all", "Show only single calendar (number)")
 	showToday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")
+	showMinutes := flag.Int("cron", 15, "Crontab mode. Show only appointments in the next n minutes.")
 	showCalendars := flag.Bool("l", false, "List configured calendars with numbers (for -c)")
 	appointmentFile := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with -c")
 	appointmentDump := flag.String("dump", "", "Dump raw  appointment data. Get filename with \"-f\" and use with -c")
@@ -276,6 +264,11 @@ func main() {
 		shell.Run()
 
 		uploadICS(*calNumber, *appointmentEdit)
+	} else if flagset["cron"] {
+		startDate = curTime.Format(IcsFormat) // TODO all wrong!
+		endDate = curTime.Add(time.Minute * time.Duration(*showMinutes)).Format(IcsFormat)
+		fmt.Println(endDate)
+		showAppointments(*calNumber)
 	} else {
 		//startDate = "20210301"
 		//endDate = "20210402"
