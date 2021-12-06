@@ -50,22 +50,13 @@ const (
 	ColBlue             = "\033[1;34m"
 )
 
-/*
-type config struct {
-	Username string
-	Password string
-	Url      string
-}
-*/
-
 type config struct {
 	Calendars []struct {
+		Url      string
 		Username string
 		Password string
-		Url      string
 	}
-	DefaultCalColor string
-	Timezone        string
+	Timezone string
 }
 
 type props struct {

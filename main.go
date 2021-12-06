@@ -55,7 +55,7 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Println(Color)
+
 	for i := range cald.Caldata {
 		eventData := cald.Caldata[i].Data
 		eventHref := cald.Caldata[i].Href
@@ -146,26 +146,9 @@ func createAppointment(calNumber string, appointmentData string) {
 	tzName, e := time.LoadLocation(config.Timezone)
 	checkError(e)
 
-	//	dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, startDate, startTime)
-	//dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", "CET", startDate, startTime)
-	//dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, startDate, startTime)
 	dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, startDate, startTime)
 	dtEndString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, endDate, endTime)
 	timezoneString := fmt.Sprintf("%v", tzName)
-	//dtStart, _ := time.Parse(IcsFormatTZ, "%vT%v00Z%v", startDate, startTime, tzOffset)
-	//dtStart, _ := time.Parse(IcsFormatTZ, dtStartString)
-	//dtStart, _ := time.Parse(IcsFormatTZ, dtStartString)
-	//dtEnd, _ := time.Parse(IcsFormatTZ, dtEndString)
-	//fmt.Println(dtStart.In(tzName))
-	//fmt.Println(dtEnd)
-	//fmt.Println(`DTSTART;TZID=Europe/Berlin:` + dtStart.UTC().Format(IcsFormat) + ``)
-	//fmt.Println(`DTSTART;TZID=Europe/Berlin:` + dtEnd.UTC().Format(IcsFormat) + ``)
-	//DTSTART;TZID=` + timezone + `:` + startDate + `T` + startTime + `00Z
-	//DTSTART;TZID=` + timezone + `:` + startDate + `T` + startTime + `00
-	//DTEND;TZID=` + timezone + `:` + endDate + `T` + endTime + `00
-
-	//DTSTART;TZID=Europe/Berlin:` + dtStart.UTC().Format(IcsFormat) + `
-	//DTEND;TZID=Europe/Berlin:` + dtEnd.UTC().Format(IcsFormat) + `
 
 	var calSkel = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -217,10 +200,6 @@ func main() {
 	//fmt.Println(curTime)
 	toFile := false
 
-	//fmt.Println(curTime.Format(IcsFormat))
-	// 	fmt.Println(curTime.AddDate(0, 2, 0).Format(IcsFormat))
-	//flag.StringVar(&startDate, "s", curTime.Format(IcsFormatWholeDay), "start date")              // default today
-	//flag.StringVar(&endDate, "e", curTime.AddDate(0, 2, 0).Format(IcsFormatWholeDay), "end date") // default 2 month
 	flag.StringVar(&startDate, "s", curTimeDay.Format(IcsFormat), "start date")              // default today
 	flag.StringVar(&endDate, "e", curTimeDay.AddDate(0, 2, 0).Format(IcsFormat), "end date") // default 2 month
 	flag.BoolVar(&showInfo, "i", false, "Show additional info like description and location for appointments")

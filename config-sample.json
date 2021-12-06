@@ -6,6 +6,5 @@
 			"Password":"supersecret"
 		}
 	],
-	"Timezone": "Europe/Berlin",
-	"DefaultCalColor":"#cccccc"
+	"Timezone": "Europe/Berlin"
 }

@@ -87,20 +87,21 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 		} else if tzID != "" {
 			format = "20060102T150405"
 			location, err := time.LoadLocation(tzID)
-			// if tzID not readable use UTC
+			// if tzID not readable use configured timezone
 			if err != nil {
-				location, _ = time.LoadLocation("UTC")
+				location, _ = time.LoadLocation(timezone)
 			}
 			// set foreign timezone
 			time, _ := time.ParseInLocation(format, dt, location)
+			fmt.Println(time)
 			// convert to local timezone
 			//t = time.In(myLocation)
 			t = time.Local()
-			//fmt.Println(t)
 		} else {
 			// Else, consider the timezone is local the parser
 			format = "20060102T150405"
 			t, _ = time.Parse(format, dt)
+			fmt.Println(t)
 		}
 
 	}
