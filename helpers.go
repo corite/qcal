@@ -20,6 +20,7 @@ import (
 func getConf() *config {
 	configData, err := ioutil.ReadFile(configLocation)
 	if err != nil {
+		fmt.Print("Config not found. \n\nPlease copy config-sample.json to ~/.config/qcal/config.json and modify it accordingly.\n\n")
 		log.Fatal(err)
 	}
 

@@ -96,7 +96,7 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 			// convert to local timezone
 			//t = time.In(myLocation)
 			t = time.Local()
-			//fmt.Println(dt)
+			//fmt.Println(t)
 		} else {
 			// Else, consider the timezone is local the parser
 			format = "20060102T150405"

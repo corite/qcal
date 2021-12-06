@@ -64,8 +64,8 @@ type config struct {
 		Password string
 		Url      string
 	}
-	Timezone        string
 	DefaultCalColor string
+	Timezone        string
 }
 
 type props struct {

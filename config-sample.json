@@ -1,0 +1,11 @@
+{
+	"Calendars": [
+		{
+			"Url":"https://my.server.de/calendar/",
+			"Username":"username",
+			"Password":"supersecret"
+		}
+	],
+	"Timezone": "Europe/Berlin",
+	"DefaultCalColor":"#cccccc"
+}
