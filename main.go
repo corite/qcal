@@ -23,11 +23,13 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 				<d:prop>
 					<c:calendar-data />
+					<d:getetag />
 				</d:prop>
 				<c:filter>
 					<c:comp-filter name="VCALENDAR">
 						<c:comp-filter name="VEVENT">
-							<c:time-range start="` + startDate + `" end="` + endDate + `"/> </c:comp-filter>
+							<c:time-range start="` + startDate + `Z" end="` + endDate + `Z" />
+						</c:comp-filter>
 					</c:comp-filter>
 				</c:filter>
 			    </c:calendar-query>`
@@ -108,9 +110,14 @@ func showAppointments(singleCal string) {
 
 	// time.Time sort by start time for events
 	//fmt.Println(len(elements))
+
 	sort.Slice(elements, func(i, j int) bool {
 		return elements[i].Start.Before(elements[j].Start)
 	})
+
+	if len(elements) == 0 {
+		os.Exit(1) // get out if nothing found
+	}
 
 	// pretty print
 	for _, e := range elements {
@@ -183,7 +190,7 @@ BEGIN:VEVENT
 UID:` + curTime.UTC().Format(IcsFormat) + `-` + newElem + `
 DTSTART;` + dtStartString + ` 
 DTEND;` + dtEndString + `
-DTSTAMP:` + curTime.UTC().Format(IcsFormat) + `
+DTSTAMP:` + curTime.UTC().Format(IcsFormat) + `Z
 SUMMARY:` + summary + `
 END:VEVENT
 END:VCALENDAR`
@@ -265,9 +272,10 @@ func main() {
 
 		uploadICS(*calNumber, *appointmentEdit)
 	} else if flagset["cron"] {
-		startDate = curTime.Format(IcsFormat) // TODO all wrong!
+		startDate = curTime.Format(IcsFormat)
 		endDate = curTime.Add(time.Minute * time.Duration(*showMinutes)).Format(IcsFormat)
-		fmt.Println(endDate)
+		showColor = false
+		//fmt.Println(endDate)
 		showAppointments(*calNumber)
 	} else {
 		//startDate = "20210301"

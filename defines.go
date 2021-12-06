@@ -24,6 +24,7 @@ var toFile bool
 var colorBlock string = "█"
 var elements []Event
 var Colors = [5]string{"\033[0;32m", "\033[1;33m", "\033[1;34m", "\033[1;35m", "\033[1;36m"}
+var showColor bool = true
 
 const (
 	ConfigDir      = ".config/qcal"
@@ -33,7 +34,7 @@ const (
 	timeFormat     = "15:04"
 	RFC822         = "02.01.06 15:04"
 	// ics date format ( describes a whole day)
-	IcsFormat   = "20060102T150405Z"
+	IcsFormat   = "20060102T150405"
 	IcsFormatTZ = "TZID=MST:20060102T150405"
 	//IcsFormatTZ         = "20060102T150405Z -0700"
 	IcsFormatWholeDay   = "20060102"

@@ -84,18 +84,24 @@ func inTimeSpan(start, end, check time.Time) bool {
 func (e Event) fancyOutput() {
 	// whole day or greater
 	if e.Start.Format(timeFormat) == e.End.Format(timeFormat) {
-		fmt.Print(e.Color + colorBlock + ColDefault + ` ` + e.Start.Format(dateFormat) + ` `)
+		if showColor {
+			fmt.Print(e.Color + colorBlock + ColDefault + ` `)
+		}
+		fmt.Print(e.Start.Format(dateFormat) + ` `)
 		fmt.Printf(`%6s`, ` `)
 		//fmt.Println(e)
 		//if e.Start.Format(dateFormat) == e.End.Format(dateFormat) {
 		if e.Start.Add(time.Hour*24) == e.End {
-			fmt.Println(ColDefault + e.Summary + ColDefault)
+			fmt.Println(e.Summary)
 		} else {
-			fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(dateFormat) + `)`)
+			fmt.Println(e.Summary + ` (until ` + e.End.Format(dateFormat) + `)`)
 		}
 	} else {
-		fmt.Print(e.Color + colorBlock + ColDefault + ` ` + e.Start.Format(RFC822) + ` `)
-		fmt.Println(ColDefault + e.Summary + ColDefault + ` (until ` + e.End.Format(timeFormat) + `)`)
+		if showColor {
+			fmt.Print(e.Color + colorBlock + ColDefault + ` `)
+		}
+		fmt.Print(e.Start.Format(RFC822) + ` `)
+		fmt.Println(e.Summary + ` (until ` + e.End.Format(timeFormat) + `)`)
 	}
 
 	if showInfo {

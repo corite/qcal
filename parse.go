@@ -59,8 +59,9 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 
 	resultWholeDay := reWholeDay.FindString(eventData)
 	var t time.Time
-	var datetime time.Time
+	//var datetime time.Time
 	var tzID string
+	var format string
 
 	if resultWholeDay != "" {
 		// whole day event
@@ -76,22 +77,32 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 
 		tzID = result[2]
 		dt := result[4]
-		if !strings.Contains(dt, "Z") {
-			dt = fmt.Sprintf("%sZ", dt)
 
-		}
-		//fmt.Println(dt)
-		location, _ := time.LoadLocation("Europe/Berlin")
-		datetime, _ = time.Parse(IcsFormat, dt)
-
-		// TODO: Solution for appointments with timezones. This here is bad.
-		if tzID != "" {
-			//loc, _ := time.LoadLocation(tzID)
-			//datetime = datetime.UTC().In(loc)
-			t = datetime
+		//	myLocation, _ := time.LoadLocation("Europe/Berlin")
+		if strings.HasSuffix(dt, "Z") {
+			// If string end in 'Z', timezone is UTC
+			format = "20060102T150405Z"
+			time, _ := time.Parse(format, dt)
+			t = time.Local()
+		} else if tzID != "" {
+			format = "20060102T150405"
+			location, err := time.LoadLocation(tzID)
+			// if tzID not readable use UTC
+			if err != nil {
+				location, _ = time.LoadLocation("UTC")
+			}
+			// set foreign timezone
+			time, _ := time.ParseInLocation(format, dt, location)
+			// convert to local timezone
+			//t = time.In(myLocation)
+			t = time.Local()
+			//fmt.Println(dt)
 		} else {
-			t = datetime.In(location)
+			// Else, consider the timezone is local the parser
+			format = "20060102T150405"
+			t, _ = time.Parse(format, dt)
 		}
+
 	}
 
 	return t, tzID

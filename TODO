@@ -1,6 +1,5 @@
 # TODO
 
-* correct timezone parsing
 * support UNTIL in appointments
 * support editing
 * cron mode
