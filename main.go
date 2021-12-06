@@ -18,6 +18,8 @@ import (
 	"time"
 )
 
+var version = "v0.8.0"
+
 func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync.WaitGroup) {
 
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
