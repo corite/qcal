@@ -28,6 +28,7 @@ creation and editing of entries.
 
 ## Installation
 
+- Have Go installed
 - make && sudo make install
 - copy config-sample.json to ~/.config/qcal/config.json and modify accordingly
 
