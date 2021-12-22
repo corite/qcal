@@ -212,7 +212,8 @@ func main() {
 	show7days := flag.Bool("7", false, "Show 7 days from now")
 	showMinutes := flag.Int("cron", 15, "Crontab mode. Show only appointments in the next n minutes.")
 	showCalendars := flag.Bool("l", false, "List configured calendars with numbers (for -c)")
-	appointmentFile := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with -c")
+	appointmentFile := flag.String("u", "", "Upload appointment file. Provide filename and use with -c")
+	appointmentDelete := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with -c")
 	appointmentDump := flag.String("dump", "", "Dump raw  appointment data. Get filename with \"-f\" and use with -c")
 	appointmentEdit := flag.String("edit", "", "Edit + upload appointment data. Get filename with \"-f\" and use with -c")
 	appointmentData := flag.String("n", "20210425 0800 0900 bla blubb foo bar", "Add a new appointment. Syntax: yyyymmdd hhmm hhmm subject")
@@ -234,7 +235,7 @@ func main() {
 	} else if flagset["n"] {
 		createAppointment(*calNumber, *appointmentData)
 	} else if flagset["d"] {
-		deleteEvent(*calNumber, *appointmentFile)
+		deleteEvent(*calNumber, *appointmentDelete)
 	} else if flagset["dump"] {
 		dumpEvent(*calNumber, *appointmentDump, toFile)
 	} else if flagset["p"] {
@@ -250,13 +251,15 @@ func main() {
 		shell.Stdin = os.Stdin
 		shell.Stderr = os.Stderr
 		shell.Run()
-
-		uploadICS(*calNumber, *appointmentEdit)
+		uploadICS(*calNumber, filepath)
+	} else if flagset["u"] {
+		uploadICS(*calNumber, *appointmentFile)
 	} else if flagset["cron"] {
 		startDate = curTime.Format(IcsFormat)
 		endDate = curTime.Add(time.Minute * time.Duration(*showMinutes)).Format(IcsFormat)
 		showColor = false
-		//fmt.Println(endDate)
+		fmt.Println(startDate)
+		fmt.Println(endDate)
 		showAppointments(*calNumber)
 	} else {
 		//startDate = "20210301"

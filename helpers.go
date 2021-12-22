@@ -209,18 +209,20 @@ func dumpEvent(calNumber string, eventFilename string, toFile bool) (status stri
 	}
 }
 
-func uploadICS(calNumber string, eventFilename string) (status string) {
+func uploadICS(calNumber string, eventFilePath string) (status string) {
 	config := getConf()
 
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
-	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
+	//fmt.Println(config.Calendars[calNo].Url + eventFilePath)
 
-	eventICS, err := ioutil.ReadFile(cacheLocation + "/" + eventFilename)
+	//eventICS, err := ioutil.ReadFile(cacheLocation + "/" + eventFilename)
+	eventICS, err := ioutil.ReadFile(eventFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	req, _ := http.NewRequest("PUT", config.Calendars[calNo].Url+eventFilename, strings.NewReader(string(eventICS)))
+	eventFileName := path.Base(eventFilePath)
+	req, _ := http.NewRequest("PUT", config.Calendars[calNo].Url+eventFileName, strings.NewReader(string(eventICS)))
 	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
 	req.Header.Add("Content-Type", "text/calendar; charset=utf-8")
 
