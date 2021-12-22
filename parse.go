@@ -4,6 +4,7 @@ import (
 	//"encoding/json"
 	"fmt"
 	// 	"log"
+	duration "github.com/channelmeter/iso8601duration"
 	"regexp"
 	"strings"
 	"time"
@@ -118,6 +119,20 @@ func parseEventEnd(eventData *string) (time.Time, string) {
 	return parseTimeField("DTEND", *eventData)
 }
 
+func parseEventDuration(eventData *string) time.Duration {
+	reDuration, _ := regexp.Compile(`DURATION:.*?\n`)
+	result := reDuration.FindString(*eventData)
+	trimmed := trimField(result, "DURATION:")
+	parsedDuration, err := duration.FromString(trimmed)
+	var output time.Duration
+
+	if err == nil {
+		output = parsedDuration.ToDuration()
+	}
+
+	return output
+}
+
 func parseEventSummary(eventData *string) string {
 	re, _ := regexp.Compile(`SUMMARY(?:;LANGUAGE=[a-zA-Z\-]+)?.*?\n`)
 	result := re.FindString(*eventData)
@@ -171,6 +186,12 @@ func parseICalTimezone(eventData *string) time.Location {
 func parseMain(eventData *string, elementsP *[]Event, freq, href, color string) {
 	eventStart, tzId := parseEventStart(eventData)
 	eventEnd, tzId := parseEventEnd(eventData)
+	eventDuration := parseEventDuration(eventData)
+
+	if eventEnd.Before(eventStart) {
+		eventEnd = eventStart.Add(eventDuration)
+	}
+
 	start, _ := time.Parse(IcsFormat, startDate)
 	end, _ := time.Parse(IcsFormat, endDate)
 	//fmt.Println(start)

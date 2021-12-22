@@ -231,6 +231,12 @@ func main() {
 	if *showCalendars {
 	}
 
+	if flagset["cron"] {
+		startDate = curTime.UTC().Format(IcsFormat)
+		endDate = curTime.UTC().Add(time.Minute * time.Duration(*showMinutes)).Format(IcsFormat)
+		showColor = false
+	}
+
 	if flagset["l"] {
 		getProp()
 	} else if flagset["n"] {
@@ -255,13 +261,6 @@ func main() {
 		uploadICS(*calNumber, filepath)
 	} else if flagset["u"] {
 		uploadICS(*calNumber, *appointmentFile)
-	} else if flagset["cron"] {
-		startDate = curTime.UTC().Format(IcsFormat)
-		endDate = curTime.UTC().Add(time.Minute * time.Duration(*showMinutes)).Format(IcsFormat)
-		showColor = false
-		fmt.Println(startDate)
-		fmt.Println(endDate)
-		showAppointments(*calNumber)
 	} else {
 		//startDate = "20210301"
 		//endDate = "20210402"
