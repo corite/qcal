@@ -21,7 +21,6 @@ import (
 var version = "v0.8.0"
 
 func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync.WaitGroup) {
-
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 				<d:prop>
 					<c:calendar-data />
@@ -198,12 +197,14 @@ END:VCALENDAR`
 
 func main() {
 	curTime := time.Now()
-	curTimeDay := curTime.UTC().Truncate(24 * time.Hour).Add(-1) // remove time, substract 1 msec for whole day appointments
-	//fmt.Println(curTime)
+	//curTimeDay := curTime.Truncate(24 * time.Hour).Add(-1) // NO! UTC only
+	// remove time, substract 1 msec for whole day appointments
+	curTimeDay := time.Date(curTime.Year(), curTime.Month(), curTime.Day(), 0, 0, 0, 0, time.Local).Add(-1)
+	//fmt.Println(curTimeDay)
 	toFile := false
 
-	flag.StringVar(&startDate, "s", curTimeDay.Format(IcsFormat), "start date")              // default today
-	flag.StringVar(&endDate, "e", curTimeDay.AddDate(0, 2, 0).Format(IcsFormat), "end date") // default 2 month
+	flag.StringVar(&startDate, "s", curTimeDay.UTC().Format(IcsFormat), "start date")              // default today
+	flag.StringVar(&endDate, "e", curTimeDay.UTC().AddDate(0, 2, 0).Format(IcsFormat), "end date") // default 2 month
 	flag.BoolVar(&showInfo, "i", false, "Show additional info like description and location for appointments")
 	flag.BoolVar(&showFilename, "f", false, "Show appointment filename for editing or deletion")
 	flag.BoolVar(&displayFlag, "p", false, "Print ICS file piped to qcal (for CLI mail tools like mutt)")
@@ -222,10 +223,10 @@ func main() {
 	flag.Visit(func(f *flag.Flag) { flagset[f.Name] = true })
 
 	if *showToday {
-		endDate = curTimeDay.AddDate(0, 0, 1).Format(IcsFormat) // today till tomorrow
+		endDate = curTimeDay.UTC().AddDate(0, 0, 1).Format(IcsFormat) // today till tomorrow
 	}
 	if *show7days {
-		endDate = curTimeDay.AddDate(0, 0, 7).Format(IcsFormat) // today till 7 days
+		endDate = curTimeDay.UTC().AddDate(0, 0, 7).Format(IcsFormat) // today till 7 days
 	}
 	if *showCalendars {
 	}
@@ -247,7 +248,7 @@ func main() {
 		filepath := cacheLocation + "/" + *appointmentEdit
 
 		shell := exec.Command(editor, filepath)
-		shell.Stdout = os.Stdout
+		shell.Stdout = os.Stdin
 		shell.Stdin = os.Stdin
 		shell.Stderr = os.Stderr
 		shell.Run()
@@ -255,8 +256,8 @@ func main() {
 	} else if flagset["u"] {
 		uploadICS(*calNumber, *appointmentFile)
 	} else if flagset["cron"] {
-		startDate = curTime.Format(IcsFormat)
-		endDate = curTime.Add(time.Minute * time.Duration(*showMinutes)).Format(IcsFormat)
+		startDate = curTime.UTC().Format(IcsFormat)
+		endDate = curTime.UTC().Add(time.Minute * time.Duration(*showMinutes)).Format(IcsFormat)
 		showColor = false
 		fmt.Println(startDate)
 		fmt.Println(endDate)

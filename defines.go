@@ -19,6 +19,8 @@ var showFilename bool
 var displayFlag bool
 var startDate string
 var endDate string
+var startDateUTC string
+var endDateUTC string
 var summary string
 var toFile bool
 var colorBlock string = "█"

@@ -1,6 +1,7 @@
 # TODO
 
 * support UNTIL in appointments
+* support DURATION in appointments
 * support editing
 * cron mode
 * import mode (for mutt)
