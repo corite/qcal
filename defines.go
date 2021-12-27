@@ -27,6 +27,7 @@ var colorBlock string = "█"
 var elements []Event
 var Colors = [5]string{"\033[0;32m", "\033[1;33m", "\033[1;34m", "\033[1;35m", "\033[1;36m"}
 var showColor bool = true
+var qcalversion string = "0.8.1"
 
 const (
 	ConfigDir      = ".config/qcal"

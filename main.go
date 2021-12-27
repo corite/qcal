@@ -18,8 +18,6 @@ import (
 	"time"
 )
 
-var version = "v0.8.0"
-
 func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync.WaitGroup) {
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 				<d:prop>
@@ -126,17 +124,57 @@ func showAppointments(singleCal string) {
 	}
 }
 
-func createAppointment(calNumber string, appointmentData string) {
+func createAppointment(calNumber string, appointmentData string, recurrence string) {
 	config := getConf()
 	curTime := time.Now()
 	dataArr := strings.Split(appointmentData, " ")
-	startDate := dataArr[0]
-	endDate := dataArr[0]
-	startTime := dataArr[1]
-	endTime := dataArr[2]
-	summary := dataArr[3]
+	var startDate string
+	var endDate string
+	var startTime string
+	var endTime string
+	var summaryIdx int
+	var isDayEvent bool
+	var calRec string
+	var dtStartString string
+	var dtEndString string
+
+	// first block - start (and possible end-) date
+	if (isNumeric(dataArr[0])) && (len(dataArr[0]) == 8) {
+		startDate = dataArr[0]
+	} else {
+		log.Fatal("Wrong date/time syntax. Please check help.")
+	}
+	// second block - start time or end date
+	if isNumeric(dataArr[1]) {
+		// if is start time
+		if len(dataArr[1]) == 4 {
+			endDate = dataArr[0]
+			startTime = dataArr[1]
+			summaryIdx = 3
+			// if second block is start time, third block needs to be end time
+			if len(dataArr[2]) == 4 {
+				endTime = dataArr[2]
+			} else {
+				log.Fatal("Wrong date/time syntax. Please check help.")
+			}
+			// if is end date
+		} else if len(dataArr[1]) == 8 {
+			endDate = dataArr[1]
+			isDayEvent = true
+			summaryIdx = 2
+		}
+	} else {
+		// if only start date is given treat as one whole day appointment
+		endDateObject, _ := time.Parse(IcsFormatWholeDay, startDate)
+		endDate = endDateObject.AddDate(0, 0, 1).Format(IcsFormatWholeDay)
+		isDayEvent = true
+		summaryIdx = 1
+	}
+	//fmt.Println(summaryIdx)
+
+	summary := dataArr[summaryIdx]
 	for i := range dataArr {
-		if i > 3 {
+		if i > summaryIdx {
 			summary = summary + ` ` + dataArr[i]
 		}
 	}
@@ -147,9 +185,28 @@ func createAppointment(calNumber string, appointmentData string) {
 	tzName, e := time.LoadLocation(config.Timezone)
 	checkError(e)
 
-	dtStartString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, startDate, startTime)
-	dtEndString := fmt.Sprintf("TZID=%v:%vT%v00", tzName, endDate, endTime)
 	timezoneString := fmt.Sprintf("%v", tzName)
+
+	if isDayEvent {
+		dtStartString = fmt.Sprintf("VALUE=DATE:%v", startDate)
+		dtEndString = fmt.Sprintf("VALUE=DATE:%v", endDate)
+	} else {
+		dtStartString = fmt.Sprintf("TZID=%v:%vT%v00", tzName, startDate, startTime)
+		dtEndString = fmt.Sprintf("TZID=%v:%vT%v00", tzName, endDate, endTime)
+	}
+	//check frequency
+	switch recurrence {
+	case "d":
+		calRec = "\nRRULE:FREQ=DAILY"
+	case "w":
+		calRec = "\nRRULE:FREQ=WEEKLY"
+	case "m":
+		calRec = "\nRRULE:FREQ=MONTHLY"
+	case "y":
+		calRec = "\nRRULE:FREQ=YEARLY"
+	default:
+		calRec = ""
+	}
 
 	var calSkel = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -175,7 +232,7 @@ UID:` + curTime.UTC().Format(IcsFormat) + `-` + newElem + `
 DTSTART;` + dtStartString + ` 
 DTEND;` + dtEndString + `
 DTSTAMP:` + curTime.UTC().Format(IcsFormat) + `Z
-SUMMARY:` + summary + `
+SUMMARY:` + summary + calRec + `
 END:VEVENT
 END:VCALENDAR`
 	//fmt.Println(calSkel)
@@ -203,21 +260,23 @@ func main() {
 	//fmt.Println(curTimeDay)
 	toFile := false
 
-	flag.StringVar(&startDate, "s", curTimeDay.UTC().Format(IcsFormat), "start date")              // default today
-	flag.StringVar(&endDate, "e", curTimeDay.UTC().AddDate(0, 2, 0).Format(IcsFormat), "end date") // default 2 month
+	flag.StringVar(&startDate, "s", curTimeDay.UTC().Format(IcsFormat), "Start date")              // default today
+	flag.StringVar(&endDate, "e", curTimeDay.UTC().AddDate(0, 2, 0).Format(IcsFormat), "Snd date") // default 2 months
 	flag.BoolVar(&showInfo, "i", false, "Show additional info like description and location for appointments")
 	flag.BoolVar(&showFilename, "f", false, "Show appointment filename for editing or deletion")
 	flag.BoolVar(&displayFlag, "p", false, "Print ICS file piped to qcal (for CLI mail tools like mutt)")
 	calNumber := flag.String("c", "all", "Show only single calendar (number)")
 	showToday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")
+	version := flag.Bool("v", false, "Show version")
 	showMinutes := flag.Int("cron", 15, "Crontab mode. Show only appointments in the next n minutes.")
-	showCalendars := flag.Bool("l", false, "List configured calendars with numbers (for -c)")
-	appointmentFile := flag.String("u", "", "Upload appointment file. Provide filename and use with -c")
-	appointmentDelete := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with -c")
-	appointmentDump := flag.String("dump", "", "Dump raw  appointment data. Get filename with \"-f\" and use with -c")
-	appointmentEdit := flag.String("edit", "", "Edit + upload appointment data. Get filename with \"-f\" and use with -c")
-	appointmentData := flag.String("n", "20210425 0800 0900 bla blubb foo bar", "Add a new appointment. Syntax: yyyymmdd hhmm hhmm subject")
+	recurrence := flag.String("r", "", "Recurrency for new appointments. Use d,w,m,y with \"-n\"")
+	showCalendars := flag.Bool("l", false, "List configured calendars with numbers (for \"-c\")")
+	appointmentFile := flag.String("u", "", "Upload appointment file. Provide filename and use with \"-c\"")
+	appointmentDelete := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with \"-c\"")
+	appointmentDump := flag.String("dump", "", "Dump raw  appointment data. Get filename with \"-f\" and use with \"-c\"")
+	appointmentEdit := flag.String("edit", "", "Edit + upload appointment data. Get filename with \"-f\" and use with \"-c\"")
+	appointmentData := flag.String("n", "20210425 0800 0900 foo bar baz", "Add a new appointment. Check README.md for syntax")
 	flag.Parse()
 	flagset := make(map[string]bool) // map for flag.Visit. get bools to determine set flags
 	flag.Visit(func(f *flag.Flag) { flagset[f.Name] = true })
@@ -230,7 +289,6 @@ func main() {
 	}
 	if *showCalendars {
 	}
-
 	if flagset["cron"] {
 		startDate = curTime.UTC().Format(IcsFormat)
 		endDate = curTime.UTC().Add(time.Minute * time.Duration(*showMinutes)).Format(IcsFormat)
@@ -240,7 +298,7 @@ func main() {
 	if flagset["l"] {
 		getProp()
 	} else if flagset["n"] {
-		createAppointment(*calNumber, *appointmentData)
+		createAppointment(*calNumber, *appointmentData, *recurrence)
 	} else if flagset["d"] {
 		deleteEvent(*calNumber, *appointmentDelete)
 	} else if flagset["dump"] {
@@ -261,6 +319,9 @@ func main() {
 		uploadICS(*calNumber, filepath)
 	} else if flagset["u"] {
 		uploadICS(*calNumber, *appointmentFile)
+	} else if *version {
+		fmt.Print("qcal ")
+		fmt.Println(qcalversion)
 	} else {
 		//startDate = "20210301"
 		//endDate = "20210402"

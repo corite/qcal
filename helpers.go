@@ -157,6 +157,11 @@ func strToInt(str string) (int, error) {
 	return strconv.Atoi(nonFractionalPart[0])
 }
 
+func isNumeric(s string) bool {
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
+}
+
 func deleteEvent(calNumber string, eventFilename string) (status string) {
 	config := getConf()
 
