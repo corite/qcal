@@ -1,11 +1,3 @@
-                 _
-  __ _  ___ __ _| |
- / _` |/ __/ _` | |
-| (_| | (_| (_| | |
- \__, |\___\__,_|_|
-    |_|
-
-
 # qcal
 
 qcal is a quick calendar application for CalDAV servers written in Go. In
@@ -49,7 +41,7 @@ This crates an appointment on 01.12.2021 from 15:00h to 17:00h with the summary 
 
 This creates a whole day appointment with a yearly recurrence
 
-   qcal -n "20210801 20210810 Holiday in Thailand"
+    qcal -n "20210801 20210810 Holiday in Thailand"
 
 This creates a multiple day appointment
 
