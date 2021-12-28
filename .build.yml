@@ -9,5 +9,5 @@ secrets:
   - 46f739e5-4538-45dd-a79f-bf173b7a2ed9
 tasks:
   - build: |
-    cd qcal
-    make
+      cd qcal
+      make
