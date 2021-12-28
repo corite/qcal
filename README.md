@@ -28,33 +28,57 @@ creation and editing of entries.
 
 ## Usage
 
-- qcal -h for common options
+Common options:
+
+    qcal -h
+
+### Displaying appointments
+
+This simply displays all appointments from today to next month:
+
+    qcal
+
+This shows all appointments for today:
+
+    qcal -t
+
+This only shows appointments from calendar 0 for the next seven days:
+
+    qcal -c 0 -7
+
+This shows all appointments from 01.10.2021, 00:00h to 31.10.2021, 23:59:59 (Note: This is in UTC!):
+
+    qcal -s 20211001T000000 -e 20211031T235959
+
+This displays all avaliable calendars with their numbers and colors:
+
+    qcal -l
 
 ### Add new appointment
 
-Even though the abillity to create new appointments is limited, it is easy to create simple appointment types:
+Even though the abillity to create new appointments is limited, it is easy to create simple appointment types.
+
+This creates an appointment on 01.12.2021 from 15:00h to 17:00h with the summary of "Tea Time":
 
     qcal -n "20211201 1500 1700 Tea Time"
 
-This crates an appointment on 01.12.2021 from 15:00h to 17:00h with the summary of "Tea Time"
+This creates a whole day appointment with a yearly recurrence in your second calendar (first is 0):
 
     qcal -c 1 -n "20211114 Anne's Birthday" -r y
 
-This creates a whole day appointment with a yearly recurrence in your second calendar (first is 0)
+This creates a multiple day appointment:
 
     qcal -n "20210801 20210810 Holiday in Thailand"
 
-This creates a multiple day appointment
-
 ### Edit an appointment
+
+This shows the next 7 days of appointments from calendar 3 with filenames ("foobarxyz.ics"):
 
     qcal -c 2 -7 -f 
 
-Shows the next 7 days of appointments from calendar 3 with filenames ("foobarxyz.ics").
+This edits the selected iCAL object in your $EDITOR (i.e. vim). When you save-quit the modified object is automatically uploaded:
 
     qcal -c 2 -edit foobarxyz.ics
-
-This edits the selected iCAL object in your $EDITOR (i.e. vim). When you save-quit the modified object is automatically uploaded.
 
 ## Integrations
 

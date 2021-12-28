@@ -261,7 +261,7 @@ func main() {
 	toFile := false
 
 	flag.StringVar(&startDate, "s", curTimeDay.UTC().Format(IcsFormat), "Start date")              // default today
-	flag.StringVar(&endDate, "e", curTimeDay.UTC().AddDate(0, 2, 0).Format(IcsFormat), "Snd date") // default 2 months
+	flag.StringVar(&endDate, "e", curTimeDay.UTC().AddDate(0, 1, 0).Format(IcsFormat), "End date") // default 1 month
 	flag.BoolVar(&showInfo, "i", false, "Show additional info like description and location for appointments")
 	flag.BoolVar(&showFilename, "f", false, "Show appointment filename for editing or deletion")
 	flag.BoolVar(&displayFlag, "p", false, "Print ICS file piped to qcal (for CLI mail tools like mutt)")
@@ -271,7 +271,7 @@ func main() {
 	version := flag.Bool("v", false, "Show version")
 	showMinutes := flag.Int("cron", 15, "Crontab mode. Show only appointments in the next n minutes.")
 	recurrence := flag.String("r", "", "Recurrency for new appointments. Use d,w,m,y with \"-n\"")
-	showCalendars := flag.Bool("l", false, "List configured calendars with numbers (for \"-c\")")
+	showCalendars := flag.Bool("l", false, "List configured calendars with their corresponding numbers (for \"-c\")")
 	appointmentFile := flag.String("u", "", "Upload appointment file. Provide filename and use with \"-c\"")
 	appointmentDelete := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with \"-c\"")
 	appointmentDump := flag.String("dump", "", "Dump raw  appointment data. Get filename with \"-f\" and use with \"-c\"")
@@ -325,20 +325,6 @@ func main() {
 	} else {
 		//startDate = "20210301"
 		//endDate = "20210402"
-		//createAppointment(*appointmentData)
 		showAppointments(*calNumber)
-		//	fmt.Printf("current time is :%s\n", curTime)
 	}
-	/*	switch flagset {
-		case flagset["n"]:
-			createAppointment(*appointmentData)
-		case flagset["C"]:
-			getProp()
-		default:
-			//startDate = "20210301"
-			//endDate = "20210402"
-			showAppointments(singleCal)
-			//      fmt.Printf("current time is :%s\n", curTime)
-		}
-	*/
 }
