@@ -9,7 +9,7 @@ import (
 var err string
 var homedir string = os.Getenv("HOME")
 var editor string = os.Getenv("EDITOR")
-var configLocation string = (homedir + "/" + ConfigDir + "/config.json")
+var configLocation string = (homedir + "/" + ConfigDir + "/config-webcal.json")
 var cacheLocation string = (homedir + "/" + CacheDir)
 var versionLocation string = (cacheLocation + "/version.json")
 var timezone, _ = time.Now().Zone()
@@ -25,9 +25,9 @@ var summary string
 var toFile bool
 var colorBlock string = "█"
 var elements []Event
-var Colors = [5]string{"\033[0;32m", "\033[1;33m", "\033[1;34m", "\033[1;35m", "\033[1;36m"}
+var Colors = [10]string{"\033[0;31m", "\033[0;32m", "\033[1;33m", "\033[1;34m", "\033[1;35m", "\033[1;36m", "\033[1;37m", "\033[1;38m", "\033[1;39m", "\033[1;40m"}
 var showColor bool = true
-var qcalversion string = "0.8.1"
+var qcalversion string = "0.8.2"
 
 const (
 	ConfigDir      = ".config/qcal"
@@ -59,7 +59,8 @@ type config struct {
 		Username string
 		Password string
 	}
-	Timezone string
+	Timezone       string
+	DefaultNumDays int
 }
 
 type props struct {

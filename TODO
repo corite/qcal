@@ -1,6 +1,6 @@
 # TODO
 
 * support UNTIL in appointments
-* support editing
 * import mode (for mutt)
 * display ics for past appointments
+* implement public calendars (webcal/ical)

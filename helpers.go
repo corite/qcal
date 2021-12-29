@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -43,7 +44,10 @@ func getProp() props {
 		req, err := http.NewRequest("PROPFIND", config.Calendars[i].Url, nil)
 		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
 
-		cli := &http.Client{}
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		cli := &http.Client{Transport: tr}
 		resp, err := cli.Do(req)
 		if err != nil {
 			log.Fatal(err)

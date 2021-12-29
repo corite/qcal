@@ -50,6 +50,19 @@ func explodeEvent(eventData *string) (string, string) {
 	calInfo := reEvent.ReplaceAllString(*eventData, "")
 	return Event, calInfo
 }
+func splitIcal(ical string) []string {
+	splits := regexp.MustCompile(`(BEGIN:VEVENT(.*\n)*?END:VEVENT\r?\n)`)
+	//reEvent, _ := regexp.Compile(`(BEGIN:VEVENT(.*\n)*?END:VEVENT\r?\n)`)
+	Events := splits.FindAllString(ical, -1)
+	/*for i := range Events {
+		//fmt.Println(eventData)
+		fmt.Println(i)
+		fmt.Println(Events[i])
+	}*/
+	//fmt.Println(splits[21])
+	//os.Exit(1)
+	return Events
+}
 
 func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 	reWholeDay, _ := regexp.Compile(fmt.Sprintf(`%s;VALUE=DATE:.*?\n`, fieldName))
@@ -77,7 +90,7 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 		}
 
 		tzID = result[2]
-		dt := result[4]
+		dt := strings.Trim(result[4], "\r") // trim that newlines!
 
 		//	myLocation, _ := time.LoadLocation("Europe/Berlin")
 		if strings.HasSuffix(dt, "Z") {
@@ -194,7 +207,7 @@ func parseMain(eventData *string, elementsP *[]Event, freq, href, color string) 
 
 	start, _ := time.Parse(IcsFormat, startDate)
 	end, _ := time.Parse(IcsFormat, endDate)
-	//fmt.Println(start)
+	//fmt.Println(eventStart)
 
 	var years, days, months int
 	switch freq {

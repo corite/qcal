@@ -2,6 +2,7 @@ package main
 
 import (
 	// 	"bytes"
+	"crypto/tls"
 	"encoding/xml"
 	"flag"
 	"fmt"
@@ -40,7 +41,11 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 	req.Header.Add("Depth", "1") // needed for SabreDAV
 	req.Header.Add("Prefer", "return-minimal")
 
-	cli := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	cli := &http.Client{Transport: tr}
 	resp, err := cli.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -52,22 +57,34 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 	//fmt.Println(string(xmlContent))
 	err = xml.Unmarshal(xmlContent, &cald)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	for i := range cald.Caldata {
-		eventData := cald.Caldata[i].Data
-		eventHref := cald.Caldata[i].Href
-		eventColor := Color
+		//fmt.Println("noxml")
+		eventData := splitIcal(string(xmlContent))
 		//fmt.Println(eventData)
-		//fmt.Println(i)
+		//log.Fatal(err)
+		for i := range eventData {
 
-		eventData, _ = explodeEvent(&eventData) // vevent only
+			eventHref := ""
+			eventColor := Color
+			reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
+			freq := trimField(reFr.FindString(parseEventRRule(&eventData[i])), `(FREQ=|;)`)
+			parseMain(&eventData[i], &elements, freq, eventHref, eventColor)
+		}
+	} else {
 
-		reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
-		freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
+		for i := range cald.Caldata {
+			eventData := cald.Caldata[i].Data
+			eventHref := cald.Caldata[i].Href
+			eventColor := Color
+			//fmt.Println(eventData)
+			//fmt.Println(i)
 
-		parseMain(&eventData, &elements, freq, eventHref, eventColor)
+			eventData, _ = explodeEvent(&eventData) // vevent only
+
+			reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
+			freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
+
+			parseMain(&eventData, &elements, freq, eventHref, eventColor)
+		}
 	}
 
 	wg.Done()
@@ -138,6 +155,12 @@ func createAppointment(calNumber string, appointmentData string, recurrence stri
 	var dtStartString string
 	var dtEndString string
 
+	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
+	// no username, no write.
+	if config.Calendars[calNo].Username == "" {
+		log.Fatal("You can't write to iCal calendars")
+	}
+
 	// first block - start (and possible end-) date
 	if (isNumeric(dataArr[0])) && (len(dataArr[0]) == 8) {
 		startDate = dataArr[0]
@@ -179,7 +202,6 @@ func createAppointment(calNumber string, appointmentData string, recurrence stri
 		}
 	}
 	newElem := genUUID() + `.ics`
-	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
 	//tzName, _ := time.Now().Zone()
 	//fmt.Printf("name: [%v]\toffset: [%v]\n", tzName, tzOffset)
 	tzName, e := time.LoadLocation(config.Timezone)
@@ -253,6 +275,7 @@ END:VCALENDAR`
 }
 
 func main() {
+	config := getConf()
 	curTime := time.Now()
 	//curTimeDay := curTime.Truncate(24 * time.Hour).Add(-1) // NO! UTC only
 	// remove time, substract 1 msec for whole day appointments
@@ -260,8 +283,8 @@ func main() {
 	//fmt.Println(curTimeDay)
 	toFile := false
 
-	flag.StringVar(&startDate, "s", curTimeDay.UTC().Format(IcsFormat), "Start date")              // default today
-	flag.StringVar(&endDate, "e", curTimeDay.UTC().AddDate(0, 1, 0).Format(IcsFormat), "End date") // default 1 month
+	flag.StringVar(&startDate, "s", curTimeDay.UTC().Format(IcsFormat), "Start date")                                  // default today
+	flag.StringVar(&endDate, "e", curTimeDay.UTC().AddDate(0, 0, config.DefaultNumDays).Format(IcsFormat), "End date") // default 1 month
 	flag.BoolVar(&showInfo, "i", false, "Show additional info like description and location for appointments")
 	flag.BoolVar(&showFilename, "f", false, "Show appointment filename for editing or deletion")
 	flag.BoolVar(&displayFlag, "p", false, "Print ICS file piped to qcal (for CLI mail tools like mutt)")

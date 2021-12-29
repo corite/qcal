@@ -6,8 +6,8 @@ qcal:
 linux-arm:
 	GOOS=linux GOARCH=arm go build -o qcal -ldflags="-s -w"
 
-macos:	
-	GOOS=darwin GOARCH=amd64 go build -o app-amd64-darwin -ldflags="-s -w"
+darwin:	
+	GOOS=darwin GOARCH=amd64 go build -o qcal -ldflags="-s -w"
 
 windows:
 	GOOS=windows GOARCH=amd64 go build -o qcal.exe -ldflags="-s -w"
