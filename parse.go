@@ -64,6 +64,12 @@ func splitIcal(ical string) []string {
 	return Events
 }
 
+func parseIcalName(eventData string) string {
+	re, _ := regexp.Compile(`X-WR-CALNAME:.*?\n`)
+	result := re.FindString(eventData)
+	return trimField(result, "X-WR-CALNAME:")
+}
+
 func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 	reWholeDay, _ := regexp.Compile(fmt.Sprintf(`%s;VALUE=DATE:.*?\n`, fieldName))
 	//re, _ := regexp.Compile(fmt.Sprintf(`%s(;TZID=(.*?))?(;VALUE=DATE-TIME)?:(.*?)\n`, fieldName))

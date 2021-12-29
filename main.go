@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+var config = getConf()
+
 func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync.WaitGroup) {
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 				<d:prop>
@@ -92,7 +94,6 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 }
 
 func showAppointments(singleCal string) {
-	config := getConf()
 	cald := Caldata{}
 
 	// use waitgroups to fetch calendars in parallel
@@ -126,13 +127,12 @@ func showAppointments(singleCal string) {
 
 	// time.Time sort by start time for events
 	//fmt.Println(len(elements))
-
 	sort.Slice(elements, func(i, j int) bool {
 		return elements[i].Start.Before(elements[j].Start)
 	})
 
 	if len(elements) == 0 {
-		os.Exit(1) // get out if nothing found
+		log.Fatal("nothing found") // get out if nothing found
 	}
 
 	// pretty print
@@ -142,7 +142,6 @@ func showAppointments(singleCal string) {
 }
 
 func createAppointment(calNumber string, appointmentData string, recurrence string) {
-	config := getConf()
 	curTime := time.Now()
 	dataArr := strings.Split(appointmentData, " ")
 	var startDate string
@@ -275,7 +274,6 @@ END:VCALENDAR`
 }
 
 func main() {
-	config := getConf()
 	curTime := time.Now()
 	//curTimeDay := curTime.Truncate(24 * time.Hour).Add(-1) // NO! UTC only
 	// remove time, substract 1 msec for whole day appointments

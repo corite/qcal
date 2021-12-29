@@ -9,7 +9,7 @@ import (
 var err string
 var homedir string = os.Getenv("HOME")
 var editor string = os.Getenv("EDITOR")
-var configLocation string = (homedir + "/" + ConfigDir + "/config-webcal.json")
+var configLocation string = (homedir + "/" + ConfigDir + "/config.json")
 var cacheLocation string = (homedir + "/" + CacheDir)
 var versionLocation string = (cacheLocation + "/version.json")
 var timezone, _ = time.Now().Zone()
@@ -53,7 +53,7 @@ const (
 	ColBlue             = "\033[1;34m"
 )
 
-type config struct {
+type configStruct struct {
 	Calendars []struct {
 		Url      string
 		Username string

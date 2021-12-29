@@ -18,14 +18,14 @@ import (
 	"time"
 )
 
-func getConf() *config {
+func getConf() *configStruct {
 	configData, err := ioutil.ReadFile(configLocation)
 	if err != nil {
 		fmt.Print("Config not found. \n\nPlease copy config-sample.json to ~/.config/qcal/config.json and modify it accordingly.\n\n")
 		log.Fatal(err)
 	}
 
-	conf := config{}
+	conf := configStruct{}
 	err = json.Unmarshal(configData, &conf)
 	//fmt.Println(conf)
 	if err != nil {
@@ -36,11 +36,9 @@ func getConf() *config {
 }
 
 func getProp() props {
-	// TODO
-	config := getConf()
 	p := props{}
+
 	for i := range config.Calendars {
-		//req, err := http.NewRequest("REPORT", config.Url, strings.NewReader(xmlBody))
 		req, err := http.NewRequest("PROPFIND", config.Calendars[i].Url, nil)
 		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
 
@@ -56,20 +54,22 @@ func getProp() props {
 		xmlContent, _ := ioutil.ReadAll(resp.Body)
 		defer resp.Body.Close()
 
-		//fmt.Println(string(xmlContent))
-		err = xml.Unmarshal(xmlContent, &p)
-		if err != nil {
-			panic(err)
+		if config.Calendars[i].Username == "" {
+			//fmt.Println(string(xmlContent))
+			icalName := parseIcalName(string(xmlContent))
+			//fmt.Println(name)
+			p.DisplayName = icalName
+
+		} else {
+			err = xml.Unmarshal(xmlContent, &p)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
 		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
 			` ` + p.DisplayName + ` (` + config.Calendars[i].Url + `)`)
-		/*if p.Color != "" {
-			fmt.Println(p.Color)
-		} else {
-			fmt.Println(config.DefaultCalColor)
-		}*/
 	}
 
 	return p
@@ -167,8 +167,6 @@ func isNumeric(s string) bool {
 }
 
 func deleteEvent(calNumber string, eventFilename string) (status string) {
-	config := getConf()
-
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
 	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
 
@@ -187,8 +185,6 @@ func deleteEvent(calNumber string, eventFilename string) (status string) {
 }
 
 func dumpEvent(calNumber string, eventFilename string, toFile bool) (status string) {
-	config := getConf()
-
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
 	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
 
@@ -219,8 +215,6 @@ func dumpEvent(calNumber string, eventFilename string, toFile bool) (status stri
 }
 
 func uploadICS(calNumber string, eventFilePath string) (status string) {
-	config := getConf()
-
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
 	//fmt.Println(config.Calendars[calNo].Url + eventFilePath)
 
