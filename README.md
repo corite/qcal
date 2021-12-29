@@ -45,7 +45,7 @@ Common options:
 
 ### Displaying appointments
 
-This simply displays all appointments from today to next month:
+This simply displays all appointments for the next x days (configured in config.json):
 
     qcal
 
