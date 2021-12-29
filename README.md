@@ -9,13 +9,14 @@ creation and editing of entries.
 
 ## Features
 
-- condensed quick overview of appointments
-- parallel fetching of multiple calendars
-- easy to use filters
-- create, modify and delete appointments
-- import ICS files
-- display ICS files
-- easy setup
+- Condensed quick overview of appointments
+- Parallel fetching of multiple calendars
+- Viewing of iCal subscriptions
+- Easy to use filters
+- Create, modify and delete appointments
+- Import ICS files
+- Display ICS files
+- Easy setup
 
 
 ## Installation / Configuration
@@ -23,8 +24,13 @@ creation and editing of entries.
 - Have Go installed
 - make && sudo make install (for MacOS: make darwin)
 - copy config-sample.json to ~/.config/qcal/config.json and modify accordingly
-- for additional calendars just add a comma and new calendar credentials in
+
+
+## Configuration
+
+- For additional calendars just add a comma and new calendar credentials in
   curly brackets.
+- Omit Username and Password if you add a readonly iCal source
 
 
 ## Usage

@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"crypto/rand"
-	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -42,10 +41,11 @@ func getProp() props {
 		req, err := http.NewRequest("PROPFIND", config.Calendars[i].Url, nil)
 		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
 
-		tr := &http.Transport{
+		/*tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		cli := &http.Client{Transport: tr}
+		cli := &http.Client{Transport: tr}*/
+		cli := &http.Client{}
 		resp, err := cli.Do(req)
 		if err != nil {
 			log.Fatal(err)
@@ -55,11 +55,7 @@ func getProp() props {
 		defer resp.Body.Close()
 
 		if config.Calendars[i].Username == "" {
-			//fmt.Println(string(xmlContent))
-			icalName := parseIcalName(string(xmlContent))
-			//fmt.Println(name)
-			p.DisplayName = icalName
-
+			p.DisplayName = parseIcalName(string(xmlContent))
 		} else {
 			err = xml.Unmarshal(xmlContent, &p)
 			if err != nil {

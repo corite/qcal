@@ -2,7 +2,6 @@ package main
 
 import (
 	// 	"bytes"
-	"crypto/tls"
 	"encoding/xml"
 	"flag"
 	"fmt"
@@ -43,11 +42,12 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 	req.Header.Add("Depth", "1") // needed for SabreDAV
 	req.Header.Add("Prefer", "return-minimal")
 
-	tr := &http.Transport{
+	/*tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
+	cli := &http.Client{Transport: tr}*/
 
-	cli := &http.Client{Transport: tr}
+	cli := &http.Client{}
 	resp, err := cli.Do(req)
 	if err != nil {
 		log.Fatal(err)
