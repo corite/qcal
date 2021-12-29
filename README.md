@@ -93,6 +93,7 @@ save-quit the modified object is automatically uploaded:
 
     qcal -c 2 -edit foobarxyz.ics
 
+
 ## Integrations
 
 ### neomutt / other cli mail tools
@@ -102,14 +103,12 @@ mailcap (usually in .config/neomutt):
 
     text/calendar; qcal -p; copiousoutput
 
-
 ### Crontab 
 
 You can get reminders of your appointments 15 mins in advance with this one
 liner:
 
-    EVENT=$(qcal -cron 15); [[ $EVENT ]] && notify-send "Next Appointment:"
-"\n$EVENT"
+    EVENT=$(qcal -cron 15); [[ $EVENT ]] && notify-send "Next Appointment:" "\n$EVENT"
 
 
 ## About
