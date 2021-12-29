@@ -25,6 +25,10 @@ creation and editing of entries.
 - make && sudo make install (for MacOS: make darwin)
 - copy config-sample.json to ~/.config/qcal/config.json and modify accordingly
 
+### Arch AUR package
+
+- Here: [AUR](https://aur.archlinux.org/packages/qcal)
+- Copy config-sample.json from /usr/share/qcal/ to ~/.config/qcal/config.json and modify accordingly
 
 ## Configuration
 
