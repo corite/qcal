@@ -6,6 +6,6 @@
 			"Password":"supersecret"
 		}
 	],
-	"Timezone": "Europe/Berlin"
+	"Timezone": "Europe/Berlin",
 	"DefaultNumDays":30
 }
