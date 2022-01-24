@@ -1,6 +1,6 @@
 PREFIX  ?= /usr/local
 
-qcal: 
+qcal: clean
 	GOOS=linux GOARCH=amd64 go build -o qcal -ldflags="-s -w"
 
 linux-arm:

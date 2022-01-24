@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -34,41 +35,62 @@ func getConf() *configStruct {
 	return &conf
 }
 
-func getProp() props {
+func getProp() {
 	p := props{}
 
-	for i := range config.Calendars {
-		req, err := http.NewRequest("PROPFIND", config.Calendars[i].Url, nil)
-		req.SetBasicAuth(config.Calendars[i].Username, config.Calendars[i].Password)
+	var wg sync.WaitGroup
+	wg.Add(len(config.Calendars)) // waitgroup length = num calendars
 
-		/*tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		cli := &http.Client{Transport: tr}*/
-		cli := &http.Client{}
-		resp, err := cli.Do(req)
+	for i := range config.Calendars {
+		//var p = props{}
+		getCalProp(i, &p, &wg)
+
+		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
+		/*fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
+		` ` + p.DisplayName + ` (` + config.Calendars[i].Url + `)`)*/
+	}
+	wg.Wait()
+
+	fmt.Println(p.DisplayName)
+	for i := range p.DisplayName {
+		fmt.Println(i)
+		//fmt.Println(p.DisplayName[i])
+		/*fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
+		` ` + p.DisplayName[i] + ` (` + config.Calendars[i].Url + `)`)*/
+	}
+}
+
+func getCalProp(calNo int, p *props, wg *sync.WaitGroup) {
+	req, err := http.NewRequest("PROPFIND", config.Calendars[calNo].Url, nil)
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+
+	/*tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	cli := &http.Client{Transport: tr}*/
+	cli := &http.Client{}
+	resp, err := cli.Do(req)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	xmlContent, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	if config.Calendars[calNo].Username == "" {
+		p.DisplayName = parseIcalName(string(xmlContent))
+		fmt.Println(p.DisplayName)
+	} else {
+		err = xml.Unmarshal(xmlContent, p)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		xmlContent, _ := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
-
-		if config.Calendars[i].Username == "" {
-			p.DisplayName = parseIcalName(string(xmlContent))
-		} else {
-			err = xml.Unmarshal(xmlContent, &p)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
-		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
-			` ` + p.DisplayName + ` (` + config.Calendars[i].Url + `)`)
+		fmt.Println(p.DisplayName)
 	}
+	//fmt.Println(p.DisplayName)
 
-	return p
+	wg.Done()
 }
 
 func checkError(e error) {
@@ -214,14 +236,33 @@ func uploadICS(calNumber string, eventFilePath string) (status string) {
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
 	//fmt.Println(config.Calendars[calNo].Url + eventFilePath)
 
-	//eventICS, err := ioutil.ReadFile(cacheLocation + "/" + eventFilename)
-	eventICS, err := ioutil.ReadFile(eventFilePath)
-	if err != nil {
-		log.Fatal(err)
-	}
+	var icsData string
+	var eventICS string
+	var eventFileName string
 
-	eventFileName := path.Base(eventFilePath)
-	req, _ := http.NewRequest("PUT", config.Calendars[calNo].Url+eventFileName, strings.NewReader(string(eventICS)))
+	if eventFilePath == "-" {
+		scanner := bufio.NewScanner(os.Stdin)
+
+		for scanner.Scan() {
+			icsData += scanner.Text() + "\n"
+		}
+		//eventICS, _ = explodeEvent(&icsData)
+		eventICS = icsData
+		eventFileName = genUUID() + `.ics`
+		fmt.Println(eventICS)
+
+	} else {
+		//eventICS, err := ioutil.ReadFile(cacheLocation + "/" + eventFilename)
+		eventICSByte, err := ioutil.ReadFile(eventFilePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		eventICS = string(eventICSByte)
+		//eventFileName = path.Base(eventFilePath)
+		eventFileName = genUUID() + `.ics`
+	}
+	req, _ := http.NewRequest("PUT", config.Calendars[calNo].Url+eventFileName, strings.NewReader(eventICS))
 	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
 	req.Header.Add("Content-Type", "text/calendar; charset=utf-8")
 
