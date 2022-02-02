@@ -26,18 +26,6 @@ const (
 	YmdHis = "2006-01-02 15:04:05"
 )
 
-type Event struct {
-	Href        string
-	Color       string
-	Start       time.Time
-	End         time.Time
-	TZID        string
-	Freq        string
-	Summary     string
-	Description string
-	Location    string
-}
-
 func trimField(field, cutset string) string {
 	re, _ := regexp.Compile(cutset)
 	cutsetRem := re.ReplaceAllString(field, "")
@@ -186,6 +174,12 @@ func parseEventRRule(eventData *string) string {
 	return trimField(result, "RRULE:")
 }
 
+func parseEventFreq(eventData *string) string {
+	re, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
+	result := re.FindString(parseEventRRule(eventData))
+	return trimField(result, `(FREQ=|;)`)
+}
+
 func parseICalTimezone(eventData *string) time.Location {
 	re, _ := regexp.Compile(`X-WR-TIMEZONE:.*?\n`)
 	result := re.FindString(*eventData)
@@ -202,10 +196,11 @@ func parseICalTimezone(eventData *string) time.Location {
 	return *loc
 }
 
-func parseMain(eventData *string, elementsP *[]Event, freq, href, color string) {
+func parseMain(eventData *string, elementsP *[]Event, href, color string) {
 	eventStart, tzId := parseEventStart(eventData)
 	eventEnd, tzId := parseEventEnd(eventData)
 	eventDuration := parseEventDuration(eventData)
+	freq := parseEventFreq(eventData)
 
 	if eventEnd.Before(eventStart) {
 		eventEnd = eventStart.Add(eventDuration)

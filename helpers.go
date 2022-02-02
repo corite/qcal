@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -79,7 +78,7 @@ func getCalProp(calNo int, p *[]calProps, wg *sync.WaitGroup) {
 	if config.Calendars[calNo].Username == "" {
 		displayName = parseIcalName(string(xmlContent))
 	} else {
-		xmlProps := props{}
+		xmlProps := xmlProps{}
 		err = xml.Unmarshal(xmlContent, &xmlProps)
 		if err != nil {
 			log.Fatal(err)
@@ -291,10 +290,8 @@ func displayICS() {
 	}
 
 	eventData, _ := explodeEvent(&icsData)
-	reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
-	freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
 
-	parseMain(&eventData, &elements, freq, "none", "none")
+	parseMain(&eventData, &elements, "none", "none")
 	for _, e := range elements {
 		e.icsOutput()
 	}

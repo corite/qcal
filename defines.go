@@ -63,7 +63,19 @@ type configStruct struct {
 	DefaultNumDays int
 }
 
-type props struct {
+type Event struct {
+	Href        string
+	Color       string
+	Start       time.Time
+	End         time.Time
+	TZID        string
+	Freq        string
+	Summary     string
+	Description string
+	Location    string
+}
+
+type xmlProps struct {
 	calNo        string
 	Url          string
 	XMLName      xml.Name `xml:"multistatus"`

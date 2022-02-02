@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -67,9 +66,7 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 
 			eventHref := ""
 			eventColor := Color
-			reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
-			freq := trimField(reFr.FindString(parseEventRRule(&eventData[i])), `(FREQ=|;)`)
-			parseMain(&eventData[i], &elements, freq, eventHref, eventColor)
+			parseMain(&eventData[i], &elements, eventHref, eventColor)
 		}
 	} else {
 
@@ -82,10 +79,7 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 
 			eventData, _ = explodeEvent(&eventData) // vevent only
 
-			reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
-			freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
-
-			parseMain(&eventData, &elements, freq, eventHref, eventColor)
+			parseMain(&eventData, &elements, eventHref, eventColor)
 		}
 	}
 
@@ -119,10 +113,7 @@ func showAppointments(singleCal string) {
 
 		eventData, _ = explodeEvent(&eventData) // vevent only
 
-		reFr, _ := regexp.Compile(`FREQ=[^;]*(;){0,1}`)
-		freq := trimField(reFr.FindString(parseEventRRule(&eventData)), `(FREQ=|;)`)
-
-		parseMain(&eventData, &elements, freq, eventHref, eventColor)
+		parseMain(&eventData, &elements, eventHref, eventColor)
 	}
 
 	// time.Time sort by start time for events
