@@ -107,6 +107,15 @@ mailcap (usually in .config/neomutt):
 
     text/calendar; qcal -p; copiousoutput
 
+If you also want to be able to import received appointments directly from
+neomutt, put the following two lines in mailcap:
+
+    text/calendar; qcal -c 0 -u %s && notify-send "Appointment created";
+    text/calendar; qcal -p; copiousoutput
+
+The first line is only executed if you press Return. The second line just
+displays the appointment as above.
+
 ### Crontab 
 
 You can get reminders of your appointments 15 mins in advance with this one
