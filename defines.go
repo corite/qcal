@@ -27,7 +27,7 @@ var colorBlock string = "█"
 var elements []Event
 var Colors = [10]string{"\033[0;31m", "\033[0;32m", "\033[1;33m", "\033[1;34m", "\033[1;35m", "\033[1;36m", "\033[1;37m", "\033[1;38m", "\033[1;39m", "\033[1;40m"}
 var showColor bool = true
-var qcalversion string = "0.8.2"
+var qcalversion string = "0.8.3"
 
 const (
 	ConfigDir      = ".config/qcal"
@@ -64,6 +64,8 @@ type configStruct struct {
 }
 
 type props struct {
+	calNo        string
+	Url          string
 	XMLName      xml.Name `xml:"multistatus"`
 	Href         string   `xml:"response>href"`
 	DisplayName  string   `xml:"response>propstat>prop>displayname"`
@@ -71,6 +73,13 @@ type props struct {
 	CTag         string   `xml:"response>propstat>prop>getctag"`
 	ETag         string   `xml:"response>propstat>prop>getetag"`
 	LastModified string   `xml:"response>propstat>prop>getlastmodified"`
+}
+
+type calProps struct {
+	calNo       int
+	displayName string
+	url         string
+	color       string
 }
 
 type Caldata struct {

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -29,38 +30,34 @@ func getConf() *configStruct {
 	err = json.Unmarshal(configData, &conf)
 	//fmt.Println(conf)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Fatal(err)
 	}
 
 	return &conf
 }
 
 func getProp() {
-	p := props{}
+	p := []calProps{}
 
 	var wg sync.WaitGroup
 	wg.Add(len(config.Calendars)) // waitgroup length = num calendars
 
 	for i := range config.Calendars {
-		//var p = props{}
-		getCalProp(i, &p, &wg)
-
-		//fmt.Printf(xml.Unmarshal(xmlContent, &p))
-		/*fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
-		` ` + p.DisplayName + ` (` + config.Calendars[i].Url + `)`)*/
+		go getCalProp(i, &p, &wg)
 	}
 	wg.Wait()
 
-	fmt.Println(p.DisplayName)
-	for i := range p.DisplayName {
-		fmt.Println(i)
-		//fmt.Println(p.DisplayName[i])
-		/*fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
-		` ` + p.DisplayName[i] + ` (` + config.Calendars[i].Url + `)`)*/
+	sort.Slice(p, func(i, j int) bool {
+		return p[i].calNo < (p[j].calNo)
+	})
+
+	for i := range p {
+		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
+			` ` + p[i].displayName + ` (` + config.Calendars[i].Url + `)`)
 	}
 }
 
-func getCalProp(calNo int, p *props, wg *sync.WaitGroup) {
+func getCalProp(calNo int, p *[]calProps, wg *sync.WaitGroup) {
 	req, err := http.NewRequest("PROPFIND", config.Calendars[calNo].Url, nil)
 	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
 
@@ -78,17 +75,24 @@ func getCalProp(calNo int, p *props, wg *sync.WaitGroup) {
 	xmlContent, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
+	var displayName string
 	if config.Calendars[calNo].Username == "" {
-		p.DisplayName = parseIcalName(string(xmlContent))
-		fmt.Println(p.DisplayName)
+		displayName = parseIcalName(string(xmlContent))
 	} else {
-		err = xml.Unmarshal(xmlContent, p)
+		xmlProps := props{}
+		err = xml.Unmarshal(xmlContent, &xmlProps)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(p.DisplayName)
+		displayName = xmlProps.DisplayName
 	}
-	//fmt.Println(p.DisplayName)
+
+	thisCal := calProps{
+		calNo:       calNo,
+		displayName: displayName,
+		url:         config.Calendars[calNo].Url,
+	}
+	*p = append(*p, thisCal)
 
 	wg.Done()
 }

@@ -132,7 +132,7 @@ func showAppointments(singleCal string) {
 	})
 
 	if len(elements) == 0 {
-		log.Fatal("nothing found") // get out if nothing found
+		log.Fatal("no events") // get out if nothing found
 	}
 
 	// pretty print
