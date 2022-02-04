@@ -116,12 +116,12 @@ neomutt, put the following two lines in mailcap:
 The first line is only executed if you press Return. The second line just
 displays the appointment as above.
 
-### Crontab 
+### Crontab (or Statusline script, Systemd timer, etc.) 
 
 You can get reminders of your appointments 15 mins in advance with this one
 liner:
 
-    EVENT=$(qcal -cron 15); [[ $EVENT ]] && notify-send "Next Appointment:" "\n$EVENT"
+    [[ $(qcal -cron 15 2>/dev/null) ]] && notify-send "Next Appointment:" "\n $(qcal -cron 15)" || true
 
 
 ## About

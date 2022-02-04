@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"sort"
@@ -51,8 +52,13 @@ func getProp() {
 	})
 
 	for i := range p {
+		u, err := url.Parse(config.Calendars[i].Url)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fmt.Println(`[` + fmt.Sprintf("%v", i) + `] - ` + Colors[i] + colorBlock + ColDefault +
-			` ` + p[i].displayName + ` (` + config.Calendars[i].Url + `)`)
+			` ` + p[i].displayName + ` (` + u.Hostname() + `)`)
 	}
 }
 
