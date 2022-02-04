@@ -15,7 +15,7 @@ windows:
 clean:
 	rm -f qcal
 
-install: qcal
+install: 
 	install -d $(PREFIX)/bin/
 	install -m 755 qcal $(PREFIX)/bin/qcal
 

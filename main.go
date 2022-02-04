@@ -19,7 +19,7 @@ import (
 
 var config = getConf()
 
-func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync.WaitGroup) {
+func fetchCalData(calNo int, cald *Caldata, wg *sync.WaitGroup) {
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 				<d:prop>
 					<c:calendar-data />
@@ -35,8 +35,8 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 			    </c:calendar-query>`
 
 	//fmt.Println(xmlBody)
-	req, err := http.NewRequest("REPORT", Url, strings.NewReader(xmlBody))
-	req.SetBasicAuth(Username, Password)
+	req, err := http.NewRequest("REPORT", config.Calendars[calNo].Url, strings.NewReader(xmlBody))
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
 	req.Header.Add("Content-Type", "application/xml; charset=utf-8")
 	req.Header.Add("Depth", "1") // needed for SabreDAV
 	req.Header.Add("Prefer", "return-minimal")
@@ -63,9 +63,8 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 		//fmt.Println(eventData)
 		//log.Fatal(err)
 		for i := range eventData {
-
 			eventHref := ""
-			eventColor := Color
+			eventColor := Colors[calNo]
 			parseMain(&eventData[i], &elements, eventHref, eventColor)
 		}
 	} else {
@@ -73,7 +72,7 @@ func fetchCalData(Url, Username, Password, Color string, cald *Caldata, wg *sync
 		for i := range cald.Caldata {
 			eventData := cald.Caldata[i].Data
 			eventHref := cald.Caldata[i].Href
-			eventColor := Color
+			eventColor := Colors[calNo]
 			//fmt.Println(eventData)
 			//fmt.Println(i)
 
@@ -97,12 +96,13 @@ func showAppointments(singleCal string) {
 		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" { // sprintf because convert int to string
 			//fmt.Println("Fetching...")
 			var cald = Caldata{}
-			go fetchCalData(config.Calendars[i].Url, config.Calendars[i].Username, config.Calendars[i].Password, Colors[i], &cald, &wg)
+			go fetchCalData(i, &cald, &wg)
 		} else {
 			wg.Done()
 		}
 	}
 	wg.Wait()
+
 	//for i := 0; i < len(cald.Caldata); i++ {
 	for i := range cald.Caldata {
 		eventData := cald.Caldata[i].Data
