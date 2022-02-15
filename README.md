@@ -28,7 +28,7 @@ creation and editing of entries.
 ### Arch AUR package
 
 - Here: [AUR](https://aur.archlinux.org/packages/qcal)
-- Copy config-sample.json from /usr/share/qcal/ to ~/.config/qcal/config.json and modify accordingly
+- Copy config-sample.json from /usr/share/doc/qcal/ to ~/.config/qcal/config.json and modify accordingly
 
 ## Configuration
 
