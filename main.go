@@ -8,8 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,20 +17,13 @@ import (
 
 var config = getConf()
 
-func fetchCalData(calNo int, cald *Caldata, wg *sync.WaitGroup) {
+func fetchCalData(calNo int, wg *sync.WaitGroup) {
 	xmlBody := `<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-				<d:prop>
-					<c:calendar-data />
-					<d:getetag />
-				</d:prop>
-				<c:filter>
-					<c:comp-filter name="VCALENDAR">
-						<c:comp-filter name="VEVENT">
-							<c:time-range start="` + startDate + `Z" end="` + endDate + `Z" />
-						</c:comp-filter>
-					</c:comp-filter>
-				</c:filter>
-			    </c:calendar-query>`
+			<d:prop><c:calendar-data /><d:getetag /></d:prop>
+			<c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT">
+				<c:time-range start="` + startDate + `Z" end="` + endDate + `Z" />
+			 </c:comp-filter></c:comp-filter></c:filter>
+		    </c:calendar-query>`
 
 	//fmt.Println(xmlBody)
 	req, err := http.NewRequest("REPORT", config.Calendars[calNo].Url, strings.NewReader(xmlBody))
@@ -54,10 +45,12 @@ func fetchCalData(calNo int, cald *Caldata, wg *sync.WaitGroup) {
 
 	xmlContent, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
-
 	//fmt.Println(string(xmlContent))
+
+	cald := Caldata{}
 	err = xml.Unmarshal(xmlContent, &cald)
-	if err != nil {
+	if err != nil { // if no XML
+		//log.Fatal(err)
 		//fmt.Println("noxml")
 		eventData := splitIcal(string(xmlContent))
 		//fmt.Println(eventData)
@@ -68,7 +61,6 @@ func fetchCalData(calNo int, cald *Caldata, wg *sync.WaitGroup) {
 			parseMain(&eventData[i], &elements, eventHref, eventColor)
 		}
 	} else {
-
 		for i := range cald.Caldata {
 			eventData := cald.Caldata[i].Data
 			eventHref := cald.Caldata[i].Href
@@ -77,58 +69,35 @@ func fetchCalData(calNo int, cald *Caldata, wg *sync.WaitGroup) {
 			//fmt.Println(i)
 
 			eventData, _ = explodeEvent(&eventData) // vevent only
-
 			parseMain(&eventData, &elements, eventHref, eventColor)
 		}
 	}
 
 	wg.Done()
-
 }
 
 func showAppointments(singleCal string) {
-	cald := Caldata{}
-
-	// use waitgroups to fetch calendars in parallel
-	var wg sync.WaitGroup
+	var wg sync.WaitGroup         // use waitgroups to fetch calendars in parallel
 	wg.Add(len(config.Calendars)) // waitgroup length = num calendars
 	for i := range config.Calendars {
 		if singleCal == fmt.Sprintf("%v", i) || singleCal == "all" { // sprintf because convert int to string
-			//fmt.Println("Fetching...")
-			var cald = Caldata{}
-			go fetchCalData(i, &cald, &wg)
+			go fetchCalData(i, &wg)
 		} else {
 			wg.Done()
 		}
 	}
 	wg.Wait()
 
-	//for i := 0; i < len(cald.Caldata); i++ {
-	for i := range cald.Caldata {
-		eventData := cald.Caldata[i].Data
-		eventHref := cald.Caldata[i].Href
-		eventColor := Colors[0]
-		//fmt.Println(eventData)
-		//fmt.Println(i)
-
-		eventData, _ = explodeEvent(&eventData) // vevent only
-
-		parseMain(&eventData, &elements, eventHref, eventColor)
-	}
-
-	// time.Time sort by start time for events
-	//fmt.Println(len(elements))
 	sort.Slice(elements, func(i, j int) bool {
-		return elements[i].Start.Before(elements[j].Start)
+		return elements[i].Start.Before(elements[j].Start) // time.Time sort by start time for events
 	})
 
 	if len(elements) == 0 {
 		log.Fatal("no events") // get out if nothing found
 	}
 
-	// pretty print
 	for _, e := range elements {
-		e.fancyOutput()
+		e.fancyOutput() // pretty print
 	}
 }
 
@@ -288,7 +257,7 @@ func main() {
 	appointmentDelete := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with \"-c\"")
 	appointmentDump := flag.String("dump", "", "Dump raw  appointment data. Get filename with \"-f\" and use with \"-c\"")
 	appointmentEdit := flag.String("edit", "", "Edit + upload appointment data. Get filename with \"-f\" and use with \"-c\"")
-	appointmentData := flag.String("n", "20210425 0800 0900 foo bar baz", "Add a new appointment. Check README.md for syntax")
+	appointmentData := flag.String("n", "", "Add a new appointment. Check README.md for syntax")
 	flag.Parse()
 	flagset := make(map[string]bool) // map for flag.Visit. get bools to determine set flags
 	flag.Visit(func(f *flag.Flag) { flagset[f.Name] = true })
@@ -318,19 +287,10 @@ func main() {
 	} else if flagset["p"] {
 		displayICS()
 	} else if flagset["edit"] {
-		toFile = true
-		dumpEvent(*calNumber, *appointmentEdit, toFile)
-		//fmt.Println(appointmentEdit)
-		filepath := cacheLocation + "/" + *appointmentEdit
-
-		shell := exec.Command(editor, filepath)
-		shell.Stdout = os.Stdin
-		shell.Stdin = os.Stdin
-		shell.Stderr = os.Stderr
-		shell.Run()
-		uploadICS(*calNumber, filepath)
+		editEvent(*calNumber, *appointmentEdit)
 	} else if flagset["u"] {
-		uploadICS(*calNumber, *appointmentFile)
+		eventEdit := false
+		uploadICS(*calNumber, *appointmentFile, eventEdit)
 	} else if *version {
 		fmt.Print("qcal ")
 		fmt.Println(qcalversion)

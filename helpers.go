@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"sort"
 	"strconv"
@@ -48,7 +49,7 @@ func getProp() {
 	wg.Wait()
 
 	sort.Slice(p, func(i, j int) bool {
-		return p[i].calNo < (p[j].calNo)
+		return p[i].calNo < p[j].calNo
 	})
 
 	for i := range p {
@@ -211,6 +212,39 @@ func deleteEvent(calNumber string, eventFilename string) (status string) {
 	return
 }
 
+func editEvent(calNumber string, eventFilename string) (status string) {
+	toFile = true
+	eventEdit := true
+	dumpEvent(calNumber, eventFilename, toFile)
+	//fmt.Println(appointmentEdit)
+	filePath := cacheLocation + "/" + eventFilename
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	beforeMTime := fileInfo.ModTime()
+
+	shell := exec.Command(editor, filePath)
+	shell.Stdout = os.Stdin
+	shell.Stdin = os.Stdin
+	shell.Stderr = os.Stderr
+	shell.Run()
+
+	fileInfo, err = os.Stat(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	afterMTime := fileInfo.ModTime()
+
+	if beforeMTime.Before(afterMTime) {
+		uploadICS(calNumber, filePath, eventEdit)
+	} else {
+		log.Fatal("no changes")
+	}
+
+	return
+}
+
 func dumpEvent(calNumber string, eventFilename string, toFile bool) (status string) {
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
 	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
@@ -241,7 +275,7 @@ func dumpEvent(calNumber string, eventFilename string, toFile bool) (status stri
 	}
 }
 
-func uploadICS(calNumber string, eventFilePath string) (status string) {
+func uploadICS(calNumber string, eventFilePath string, eventEdit bool) (status string) {
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
 	//fmt.Println(config.Calendars[calNo].Url + eventFilePath)
 
@@ -268,8 +302,11 @@ func uploadICS(calNumber string, eventFilePath string) (status string) {
 		}
 
 		eventICS = string(eventICSByte)
-		//eventFileName = path.Base(eventFilePath)
-		eventFileName = genUUID() + `.ics`
+		if eventEdit == true {
+			eventFileName = path.Base(eventFilePath) // use old filename again
+		} else {
+			eventFileName = genUUID() + `.ics` // no edit, so new filename
+		}
 	}
 	req, _ := http.NewRequest("PUT", config.Calendars[calNo].Url+eventFileName, strings.NewReader(eventICS))
 	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
