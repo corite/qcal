@@ -67,6 +67,8 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 
 	resultWholeDay := reWholeDay.FindString(eventData)
 	var t time.Time
+	var thisTime time.Time
+	//var thisTime time.Time
 	//var datetime time.Time
 	var tzID string
 	var format string
@@ -86,7 +88,6 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 		tzID = result[2]
 		dt := strings.Trim(result[4], "\r") // trim that newlines!
 
-		//	myLocation, _ := time.LoadLocation("Europe/Berlin")
 		if strings.HasSuffix(dt, "Z") {
 			// If string ends in 'Z', timezone is UTC
 			format = "20060102T150405Z"
@@ -98,11 +99,12 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 			location, err := time.LoadLocation(tzID)
 			// if tzID not readable use configured timezone
 			if err != nil {
-				location, _ = time.LoadLocation(timezone)
+				location, _ = time.LoadLocation(config.Timezone)
+				// timezone from defines gives CEST, which is not working with parseinlocation:
+				//location, _ = time.LoadLocation(timezone)
 			}
 			// set foreign timezone
-			thisTime, _ := time.ParseInLocation(format, dt, location)
-			//fmt.Println(time)
+			thisTime, _ = time.ParseInLocation(format, dt, location)
 			// convert to local timezone
 			//t = time.In(myLocation)
 			t = thisTime.Local()

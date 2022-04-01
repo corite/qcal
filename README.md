@@ -1,6 +1,6 @@
 # qcal
 
-qcal is a quick calendar application for CalDAV servers written in Go. In
+qcal is a CLI calendar application for CalDAV servers written in Go. In
 contrast to other tools it does not cache anything. It can fetch multiple
 servers / calendars in parallel which makes it quite fast.
 

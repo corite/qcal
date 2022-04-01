@@ -24,12 +24,12 @@ var endDateUTC string
 var summary string
 var toFile bool
 
-// var colorBlock string = "█"
+//var colorBlock string = "█"
 var colorBlock string = "|"
 var elements []Event
 var Colors = [10]string{"\033[0;31m", "\033[0;32m", "\033[1;33m", "\033[1;34m", "\033[1;35m", "\033[1;36m", "\033[1;37m", "\033[1;38m", "\033[1;39m", "\033[1;40m"}
 var showColor bool = true
-var qcalversion string = "0.8.4"
+var qcalversion string = "0.8.5"
 
 const (
 	ConfigDir      = ".config/qcal"
