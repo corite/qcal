@@ -118,7 +118,11 @@ func (e Event) fancyOutput() {
 	// whole day or greater
 	if e.Start.Format(timeFormat) == e.End.Format(timeFormat) {
 		if showColor {
-			fmt.Print(e.Color + colorBlock + ColDefault + ` `)
+			if e.Start.Format(IcsFormatWholeDay) == time.Now().Format(IcsFormatWholeDay) {
+				fmt.Print(e.Color + colorBlock + ColWhite + ` `)
+			} else {
+				fmt.Print(e.Color + colorBlock + ColDefault + ` `)
+			}
 		}
 		fmt.Print(e.Start.Format(dateFormat) + ` `)
 		fmt.Printf(`%6s`, ` `)
@@ -131,10 +135,16 @@ func (e Event) fancyOutput() {
 		}
 	} else {
 		if showColor {
-			fmt.Print(e.Color + colorBlock + ColDefault + ` `)
+			if e.Start.Format(IcsFormatWholeDay) == time.Now().Format(IcsFormatWholeDay) {
+				fmt.Print(e.Color + colorBlock + ColWhite + ` `)
+			} else {
+				fmt.Print(e.Color + colorBlock + ColDefault + ` `)
+			}
 		}
+
 		fmt.Print(e.Start.Format(RFC822) + ` `)
-		fmt.Println(e.Summary + ` (until ` + e.End.Format(timeFormat) + `)`)
+		fmt.Println(e.Summary + ` (until ` + e.End.Format(timeFormat) + `)` + ColDefault)
+
 	}
 
 	if showInfo {
