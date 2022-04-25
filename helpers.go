@@ -119,7 +119,7 @@ func (e Event) fancyOutput() {
 	if e.Start.Format(timeFormat) == e.End.Format(timeFormat) {
 		if showColor {
 			if e.Start.Format(IcsFormatWholeDay) == time.Now().Format(IcsFormatWholeDay) {
-				fmt.Print(e.Color + colorBlock + ColWhite + ` `)
+				fmt.Print(e.Color + colorBlock + currentDot + ColDefault)
 			} else {
 				fmt.Print(e.Color + colorBlock + ColDefault + ` `)
 			}
@@ -136,7 +136,7 @@ func (e Event) fancyOutput() {
 	} else {
 		if showColor {
 			if e.Start.Format(IcsFormatWholeDay) == time.Now().Format(IcsFormatWholeDay) {
-				fmt.Print(e.Color + colorBlock + ColWhite + ` `)
+				fmt.Print(e.Color + colorBlock + currentDot + ColDefault)
 			} else {
 				fmt.Print(e.Color + colorBlock + ColDefault + ` `)
 			}
