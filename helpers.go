@@ -143,7 +143,7 @@ func (e Event) fancyOutput() {
 		}
 
 		fmt.Print(e.Start.Format(RFC822) + ` `)
-		fmt.Println(e.Summary + ` (until ` + e.End.Format(timeFormat) + `)` + ColDefault)
+		fmt.Println(e.Summary + ` (until ` + e.End.Format(timeFormat) + `)`)
 
 	}
 
