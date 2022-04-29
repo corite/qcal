@@ -208,6 +208,10 @@ func deleteEvent(calNumber string, eventFilename string) (status string) {
 	calNo, _ := strconv.ParseInt(calNumber, 0, 64)
 	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
 
+	if eventFilename == "" {
+		log.Fatal("No event filename given")
+	}
+
 	req, _ := http.NewRequest("DELETE", config.Calendars[calNo].Url+eventFilename, nil)
 	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
 

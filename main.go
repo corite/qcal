@@ -254,8 +254,8 @@ func main() {
 	recurrence := flag.String("r", "", "Recurrency for new appointments. Use d,w,m,y with \"-n\"")
 	showCalendars := flag.Bool("l", false, "List configured calendars with their corresponding numbers (for \"-c\")")
 	appointmentFile := flag.String("u", "", "Upload appointment file. Provide filename and use with \"-c\"")
-	appointmentDelete := flag.String("d", "", "Delete appointment. Get filename with \"-f\" and use with \"-c\"")
-	appointmentDump := flag.String("dump", "", "Dump raw appointment data. Get filename with \"-f\" and use with \"-c\"")
+	appointmentDelete := flag.String("delete", "", "Delete appointment. Get filename with \"-f\" and use with \"-c\"")
+	appointmentDump := flag.String("d", "", "Dump raw appointment data. Get filename with \"-f\" and use with \"-c\"")
 	appointmentEdit := flag.String("edit", "", "Edit + upload appointment data. Get filename with \"-f\" and use with \"-c\"")
 	appointmentData := flag.String("n", "", "Add a new appointment. Check README.md for syntax")
 	flag.Parse()
@@ -280,9 +280,9 @@ func main() {
 		getProp()
 	} else if flagset["n"] {
 		createAppointment(*calNumber, *appointmentData, *recurrence)
-	} else if flagset["d"] {
+	} else if flagset["delete"] {
 		deleteEvent(*calNumber, *appointmentDelete)
-	} else if flagset["dump"] {
+	} else if flagset["d"] {
 		dumpEvent(*calNumber, *appointmentDump, toFile)
 	} else if flagset["p"] {
 		displayICS()
