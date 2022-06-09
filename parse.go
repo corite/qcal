@@ -153,7 +153,8 @@ func parseEventDescription(eventData *string) string {
 
 	resultA := re.FindAllString(*eventData, -1)
 	result := strings.Join(resultA, ", ")
-	//result = strings.Replace(result, "\n", "", -1)
+	result = strings.Replace(result, "\n", "", -1)
+
 	result = strings.Replace(result, "\\N", "\n", -1)
 	//better := strings.Replace(re.FindString(result), "\n ", "", -1)
 	//better = strings.Replace(better, "\\n", " ", -1)
