@@ -171,17 +171,22 @@ func parseEventLocation(eventData *string) string {
 	return trimField(result, "LOCATION:")
 }
 
-func parseEventAttendees(eventData *string) {
-	re, _ := regexp.Compile(`ATTENDEE:.*?\n`)
-	attendees := re.FindAllString(*eventData, -1)
+func parseEventAttendees(eventData *string) []string {
+	//re, _ := regexp.Compile(`ATTENDEE;.*?\n`)
+	re, _ := regexp.Compile(`ATTENDEE;.+\"(.+?)\".*\n`)
+	attendeesstring := re.FindAllString(*eventData, -1)
+	var attendees []string
 
-	for i := range attendees {
+	for i := range attendeesstring {
 		//fmt.Println(eventData)
-		fmt.Println(i)
-		fmt.Println(attendees[i])
+		result := re.FindStringSubmatch(attendeesstring[i])
+		attendees = append(attendees, result[1])
+
+		//attendee := trimField(attendees[i], `ATTENDEE;.*\"`)
+		//fmt.Println(result[1])
 	}
 
-	//	return trimField(result, "ATTENDEE:")
+	return attendees
 }
 
 func parseEventRRule(eventData *string) string {
@@ -217,7 +222,6 @@ func parseMain(eventData *string, elementsP *[]Event, href, color string) {
 	eventEnd, tzId := parseEventEnd(eventData)
 	eventDuration := parseEventDuration(eventData)
 	freq := parseEventFreq(eventData)
-	parseEventAttendees(eventData)
 
 	if eventEnd.Before(eventStart) {
 		eventEnd = eventStart.Add(eventDuration)
@@ -263,6 +267,7 @@ func parseMain(eventData *string, elementsP *[]Event, href, color string) {
 				Summary:     parseEventSummary(eventData),
 				Description: parseEventDescription(eventData),
 				Location:    parseEventLocation(eventData),
+				Attendees:   parseEventAttendees(eventData),
 			}
 			*elementsP = append(*elementsP, data)
 

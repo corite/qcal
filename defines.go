@@ -75,6 +75,7 @@ type Event struct {
 	Summary     string
 	Description string
 	Location    string
+	Attendees   []string
 }
 
 type xmlProps struct {
