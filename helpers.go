@@ -149,16 +149,16 @@ func (e Event) fancyOutput() {
 
 	if showInfo {
 		if e.Description != "" {
-			fmt.Printf(`%15s`, ` `)
+			fmt.Printf(`%17s`, ` `)
 			fmt.Println(`Description: ` + e.Description)
 		}
 		if e.Location != "" {
-			fmt.Printf(`%15s`, ` `)
+			fmt.Printf(`%17s`, ` `)
 			fmt.Println("Location: " + e.Location)
 		}
 		if len(e.Attendees) != 0 {
 			for i := range e.Attendees {
-				fmt.Printf(`%15s`, ` `)
+				fmt.Printf(`%17s`, ` `)
 				fmt.Println("Attendee: " + e.Attendees[i])
 			}
 		}
