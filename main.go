@@ -26,7 +26,11 @@ func fetchCalData(calNo int, wg *sync.WaitGroup) {
 		    </c:calendar-query>`
 
 	//fmt.Println(xmlBody)
-	req, err := http.NewRequest("REPORT", config.Calendars[calNo].Url, strings.NewReader(xmlBody))
+	reqType := "REPORT"
+	if config.Calendars[calNo].Username == "" {
+		reqType = "GET"
+	}
+	req, _ := http.NewRequest(reqType, config.Calendars[calNo].Url, strings.NewReader(xmlBody))
 	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
 	req.Header.Add("Content-Type", "application/xml; charset=utf-8")
 	req.Header.Add("Depth", "1") // needed for SabreDAV

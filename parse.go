@@ -47,7 +47,7 @@ func splitIcal(ical string) []string {
 		fmt.Println(i)
 		fmt.Println(Events[i])
 	}*/
-	//fmt.Println(splits[21])
+	//fmt.Println(Events[1])
 	//os.Exit(1)
 	return Events
 }
