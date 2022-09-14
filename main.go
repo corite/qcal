@@ -27,14 +27,20 @@ func fetchCalData(calNo int, wg *sync.WaitGroup) {
 
 	//fmt.Println(xmlBody)
 	reqType := "REPORT"
+
 	if config.Calendars[calNo].Username == "" {
-		reqType = "GET"
+		reqType = "GET" // some servers don't like REPORT
+		xmlBody = ""
 	}
+
 	req, _ := http.NewRequest(reqType, config.Calendars[calNo].Url, strings.NewReader(xmlBody))
-	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
-	req.Header.Add("Content-Type", "application/xml; charset=utf-8")
-	req.Header.Add("Depth", "1") // needed for SabreDAV
-	req.Header.Add("Prefer", "return-minimal")
+
+	if config.Calendars[calNo].Username != "" {
+		req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+		req.Header.Add("Depth", "1") // needed for SabreDAV
+		req.Header.Add("Prefer", "return-minimal")
+		req.Header.Add("Content-Type", "application/xml; charset=utf-8")
+	}
 
 	/*tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},

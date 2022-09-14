@@ -79,6 +79,8 @@ func getCalProp(calNo int, p *[]calProps, wg *sync.WaitGroup) {
 	}
 
 	xmlContent, _ := ioutil.ReadAll(resp.Body)
+
+	//fmt.Println(string(xmlContent))
 	defer resp.Body.Close()
 
 	var displayName string
@@ -113,7 +115,7 @@ func inTimeSpan(start, end, check time.Time) bool {
 	return check.After(start) && check.Before(end)
 }
 
-//func fancyOutput(elem *event) {
+// func fancyOutput(elem *event) {
 func (e Event) fancyOutput() {
 	// whole day or greater
 	if e.Start.Format(timeFormat) == e.End.Format(timeFormat) {
