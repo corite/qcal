@@ -123,6 +123,13 @@ liner:
 
     [[ $(qcal -cron 15 2>/dev/null) ]] && notify-send "Next Appointment:" "\n $(qcal -cron 15)" || true
 
+### External password command
+
+Instead of putting your password in the config file you can specify an
+external command to resolve your password. Put a line like this in your
+calendar config and leave the "Password" field empty:
+    
+    "PasswordCommand":"rbw get email-provider"
 
 ## About
 

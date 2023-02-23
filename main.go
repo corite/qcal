@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -36,7 +38,20 @@ func fetchCalData(calNo int, wg *sync.WaitGroup) {
 	req, _ := http.NewRequest(reqType, config.Calendars[calNo].Url, strings.NewReader(xmlBody))
 
 	if config.Calendars[calNo].Username != "" {
-		req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+		var pw string
+		if config.Calendars[calNo].PasswordCmd == "" {
+			pw = config.Calendars[calNo].Password
+		} else {
+			cmd := exec.Command("sh", "-c", config.Calendars[calNo].PasswordCmd)
+			cmd.Stdin = os.Stdin
+			output, err := cmd.Output()
+			if err != nil {
+				log.Fatal(err)
+			}
+			pw = strings.TrimSpace(string(output))
+		}
+
+		req.SetBasicAuth(config.Calendars[calNo].Username, pw)
 		req.Header.Add("Depth", "1") // needed for SabreDAV
 		req.Header.Add("Prefer", "return-minimal")
 		req.Header.Add("Content-Type", "application/xml; charset=utf-8")
