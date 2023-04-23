@@ -65,7 +65,7 @@ func getProp() {
 
 func getCalProp(calNo int, p *[]calProps, wg *sync.WaitGroup) {
 	req, err := http.NewRequest("PROPFIND", config.Calendars[calNo].Url, nil)
-	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].password())
 
 	/*tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -221,7 +221,7 @@ func deleteEvent(calNumber string, eventFilename string) (status string) {
 	}
 
 	req, _ := http.NewRequest("DELETE", config.Calendars[calNo].Url+eventFilename, nil)
-	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].password())
 
 	cli := &http.Client{}
 	resp, err := cli.Do(req)
@@ -272,7 +272,7 @@ func dumpEvent(calNumber string, eventFilename string, toFile bool) (status stri
 	//fmt.Println(config.Calendars[calNo].Url + eventFilename)
 
 	req, _ := http.NewRequest("GET", config.Calendars[calNo].Url+eventFilename, nil)
-	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].password())
 
 	cli := &http.Client{}
 	resp, err := cli.Do(req)
@@ -331,7 +331,7 @@ func uploadICS(calNumber string, eventFilePath string, eventEdit bool) (status s
 		}
 	}
 	req, _ := http.NewRequest("PUT", config.Calendars[calNo].Url+eventFileName, strings.NewReader(eventICS))
-	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].Password)
+	req.SetBasicAuth(config.Calendars[calNo].Username, config.Calendars[calNo].password())
 	req.Header.Add("Content-Type", "text/calendar; charset=utf-8")
 
 	cli := &http.Client{}
@@ -365,4 +365,18 @@ func displayICS() {
 		log.Println(err)
 	}
 
+}
+
+func (c *calendar) password() string {
+	if c.PasswordCmd == "" {
+		return c.Password
+	} else {
+		cmd := exec.Command("sh", "-c", c.PasswordCmd)
+		cmd.Stdin = os.Stdin
+		output, err := cmd.Output()
+		if err != nil {
+			log.Fatal(err)
+		}
+		return strings.TrimSpace(string(output))
+	}
 }

@@ -24,7 +24,7 @@ var endDateUTC string
 var summary string
 var toFile bool
 var elements []Event
-var qcalversion string = "0.9.0"
+var qcalversion string = "0.9.1"
 
 var colorBlock string = "|"
 var currentDot string = "•"
@@ -55,13 +55,15 @@ const (
 	ColBlue             = "\033[1;34m"
 )
 
+type calendar struct {
+	Url         string
+	Username    string
+	Password    string
+	PasswordCmd string
+}
+
 type configStruct struct {
-	Calendars []struct {
-		Url         string
-		Username    string
-		Password    string
-		PasswordCmd string
-	}
+	Calendars      []calendar
 	Timezone       string
 	DefaultNumDays int
 }
