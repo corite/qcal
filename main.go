@@ -202,7 +202,6 @@ func createAppointment(calNumber string, appointmentData string, recurrence stri
 	var calSkel = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//qcal
-METHOD:PUBLISH
 BEGIN:VTIMEZONE
 TZID:` + timezoneString + `
 BEGIN:STANDARD
@@ -220,7 +219,7 @@ END:DAYLIGHT
 END:VTIMEZONE
 BEGIN:VEVENT
 UID:` + curTime.UTC().Format(IcsFormat) + `-` + newElem + `
-DTSTART;` + dtStartString + ` 
+DTSTART;` + dtStartString + `
 DTEND;` + dtEndString + `
 DTSTAMP:` + curTime.UTC().Format(IcsFormat) + `Z
 SUMMARY:` + summary + calRec + `
@@ -240,7 +239,6 @@ END:VCALENDAR`
 		log.Fatal(err)
 	}
 	fmt.Println(resp.Status)
-
 }
 
 func main() {

@@ -4,10 +4,11 @@ import (
 	//"encoding/json"
 	"fmt"
 	// 	"log"
-	duration "github.com/channelmeter/iso8601duration"
 	"regexp"
 	"strings"
 	"time"
+
+	duration "github.com/channelmeter/iso8601duration"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 	eventFreqYearlyRegex = regexp.MustCompile(`RRULE:FREQ=YEARLY\n`)
 )
 
-//  unixtimestamp
+// unixtimestamp
 const (
 	uts = "1136239445"
 	//ics date time format
@@ -80,13 +81,15 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 	} else {
 		// event that has start hour and minute
 		result := re.FindStringSubmatch(eventData)
+		//fmt.Println(result)
 
 		if result == nil || len(result) < 4 {
 			return t, tzID
 		}
 
 		tzID = result[2]
-		dt := strings.Trim(result[4], "\r") // trim that newlines!
+		//fmt.Println(tzID)
+		dt := strings.Trim(result[4], "\r") // trim these newlines!
 
 		if strings.HasSuffix(dt, "Z") {
 			// If string ends in 'Z', timezone is UTC
@@ -97,6 +100,7 @@ func parseTimeField(fieldName string, eventData string) (time.Time, string) {
 		} else if tzID != "" {
 			format = "20060102T150405"
 			location, err := time.LoadLocation(tzID)
+			//fmt.Println(location)
 			// if tzID not readable use configured timezone
 			if err != nil {
 				location, _ = time.LoadLocation(config.Timezone)
