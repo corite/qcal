@@ -40,6 +40,7 @@ const (
 	RFC822         = "02.01.06 15:04"
 	// ics date format ( describes a whole day)
 	IcsFormat   = "20060102T150405"
+	IcsFormatZ  = "20060102T150405Z"
 	IcsFormatTZ = "TZID=MST:20060102T150405"
 	//IcsFormatTZ         = "20060102T150405Z -0700"
 	IcsFormatWholeDay   = "20060102"

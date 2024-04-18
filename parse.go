@@ -205,6 +205,12 @@ func parseEventFreq(eventData *string) string {
 	return trimField(result, `(FREQ=|;)`)
 }
 
+func parseEventUntil(eventData *string) string {
+	re, _ := regexp.Compile(`UNTIL=(\d)*T(\d)*Z(;){0,1}`)
+	result := re.FindString(*eventData)
+	return trimField(result, `(UNTIL=|;)`)
+}
+
 func parseICalTimezone(eventData *string) time.Location {
 	re, _ := regexp.Compile(`X-WR-TIMEZONE:.*?\n`)
 	result := re.FindString(*eventData)
@@ -225,6 +231,7 @@ func parseMain(eventData *string, elementsP *[]Event, href, color string) {
 	eventStart, tzId := parseEventStart(eventData)
 	eventEnd, tzId := parseEventEnd(eventData)
 	eventDuration := parseEventDuration(eventData)
+	eventUntil := parseEventUntil(eventData)
 	freq := parseEventFreq(eventData)
 
 	if eventEnd.Before(eventStart) {
@@ -284,9 +291,15 @@ func parseMain(eventData *string, elementsP *[]Event, href, color string) {
 		eventStart = eventStart.AddDate(years, months, days)
 		eventEnd = eventEnd.AddDate(years, months, days)
 
-		// TODO: support UNTIL
 		if eventStart.After(end) {
 			break
+		}
+
+		if eventUntil != "" {
+			until, _ := time.Parse(IcsFormatZ, eventUntil)
+			if until.Before(start) {
+				break
+			}
 		}
 	}
 }
