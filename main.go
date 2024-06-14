@@ -254,6 +254,7 @@ func main() {
 	flag.BoolVar(&showInfo, "i", false, "Show additional info like description and location for appointments")
 	flag.BoolVar(&showFilename, "f", false, "Show appointment filename for editing or deletion")
 	flag.BoolVar(&displayFlag, "p", false, "Print ICS file piped to qcal (for CLI mail tools like mutt)")
+	flag.BoolVar(&showWeekday, "wd", false, "Show weekday")
 	calNumber := flag.String("c", "all", "Show only single calendar (number)")
 	showToday := flag.Bool("t", false, "Show appointments for today")
 	show7days := flag.Bool("7", false, "Show 7 days from now")

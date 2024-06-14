@@ -126,6 +126,9 @@ func (e Event) fancyOutput() {
 				fmt.Print(e.Color + colorBlock + ColDefault + ` `)
 			}
 		}
+		if showWeekday {
+			fmt.Print(e.Start.Weekday().String()[0:3] + ` `)
+		}
 		fmt.Print(e.Start.Format(dateFormat) + ` `)
 		fmt.Printf(`%6s`, ` `)
 		//fmt.Println(e)
@@ -144,6 +147,9 @@ func (e Event) fancyOutput() {
 			}
 		}
 
+		if showWeekday {
+			fmt.Print(e.Start.Weekday().String()[0:3] + ` `)
+		}
 		fmt.Print(e.Start.Format(RFC822) + ` `)
 		fmt.Println(e.Summary + ` (until ` + e.End.Format(timeFormat) + `)`)
 
