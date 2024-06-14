@@ -20,7 +20,8 @@
         pname = "qcal";
         inherit version;
         src = ./.;
-        vendorHash = "sha256-ntpSj3Ze7n1sMIMojaESi4tQtx+mrA0aiv3+MQetjZI=";
+        # vendorHash = pkgs.lib.fakeHash;
+        vendorHash = "sha256-W9g2JzShvm2hJ+fcdwsoD3B6iUU55ufN6FTTl6qK6Oo=";
       };
     });
     devShells = forAllSystems (system: let
