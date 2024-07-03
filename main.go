@@ -5,7 +5,7 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"sort"
@@ -53,7 +53,7 @@ func fetchCalData(calNo int, wg *sync.WaitGroup) {
 		log.Fatal(err)
 	}
 
-	xmlContent, _ := ioutil.ReadAll(resp.Body)
+	xmlContent, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	//fmt.Println(string(xmlContent))
 

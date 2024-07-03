@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -21,7 +21,7 @@ import (
 )
 
 func getConf() *configStruct {
-	configData, err := ioutil.ReadFile(configLocation)
+	configData, err := os.ReadFile(configLocation)
 	if err != nil {
 		fmt.Print("Config not found. \n\nPlease copy config-sample.json to ~/.config/qcal/config.json and modify it accordingly.\n\n")
 		log.Fatal(err)
@@ -78,7 +78,7 @@ func getCalProp(calNo int, p *[]calProps, wg *sync.WaitGroup) {
 		log.Fatal(err)
 	}
 
-	xmlContent, _ := ioutil.ReadAll(resp.Body)
+	xmlContent, _ := io.ReadAll(resp.Body)
 
 	//fmt.Println(string(xmlContent))
 	defer resp.Body.Close()
@@ -287,12 +287,12 @@ func dumpEvent(calNumber string, eventFilename string, toFile bool) (status stri
 		log.Fatal(err)
 	}
 	//fmt.Println(resp.Status)
-	xmlContent, _ := ioutil.ReadAll(resp.Body)
+	xmlContent, _ := io.ReadAll(resp.Body)
 
 	if toFile {
 		// create cache dir if not exists
 		os.MkdirAll(cacheLocation, os.ModePerm)
-		err := ioutil.WriteFile(cacheLocation+"/"+eventFilename, xmlContent, 0644)
+		err := os.WriteFile(cacheLocation+"/"+eventFilename, xmlContent, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -323,8 +323,8 @@ func uploadICS(calNumber string, eventFilePath string, eventEdit bool) (status s
 		fmt.Println(eventICS)
 
 	} else {
-		//eventICS, err := ioutil.ReadFile(cacheLocation + "/" + eventFilename)
-		eventICSByte, err := ioutil.ReadFile(eventFilePath)
+		//eventICS, err := os.ReadFile(cacheLocation + "/" + eventFilename)
+		eventICSByte, err := os.ReadFile(eventFilePath)
 		if err != nil {
 			log.Fatal(err)
 		}
